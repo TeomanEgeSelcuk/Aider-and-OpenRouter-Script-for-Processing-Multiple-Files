@@ -1,0 +1,45 @@
+# Ignore cache files and directories
+*.py[cod]
+*$py.class
+
+# Ignore any directory or file with "cache" in its name
+*cache*
+*deepeval*
+
+# Ignore .vscode directory
+.vscode/
+
+# Ignore environment files
+.env
+.env.*
+
+# Ignore Python virtual environments
+venv/
+.env/
+.pipenv/
+pyvenv.cfg
+
+# Ignore distribution/build files
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Ignore IDE specific files
+.idea/
+*.iml
+
+# Ignore macOS specific files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Ignore logs and temporary files
+*.tmp
+*.swp
+*.swo
+
+# Ignore Log files and directories
+*.log
+**/*log*
+*log*/ 

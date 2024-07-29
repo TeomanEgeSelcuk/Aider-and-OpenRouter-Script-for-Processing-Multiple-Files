@@ -1,0 +1,8 @@
+name: openrouter-aider-env
+channels:
+  - defaults
+dependencies:
+  - python=3.12
+  - pip
+  - pip:
+      - poetry

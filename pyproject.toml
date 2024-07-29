@@ -1,0 +1,28 @@
+[tool.poetry]
+name = "Aider LLM File Editor: A script-based tool for sequentially editing files, running files and their tests, and recording outputs, including errors and exceptions, from the terminal."
+version = "0.1.0"
+description = "A project to use OpenRouter models with aider-chat."
+authors = ["Teoman Selcuk <teomanege.selcuk@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = ">=3.12,<3.13" 
+aider-chat = "^0.45.1"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.1"
+
+[tool.pyright]  # Configuration for the Pyright static type checker
+useLibraryCodeForTypes = true  # Use library code for type inference
+exclude = [".cache"]  # Exclude the ".cache" directory from type checking
+
+[build-system]  # Build system configuration
+requires = ["poetry-core>=1.0.0"]  # Required version of poetry-core
+build-backend = "poetry.core.masonry.api"  # Build backend for Poetry
+
+[[tool.poetry.packages]]
+include = "Aider_Project" # Package configuration for the Aider_Project package
+
+[tool.pytest.ini_options]
+# Specify additional paths to be added to sys.path
+# "Aider_Project" and "tests" directories will be included in the Python path when running pytest
+python_paths = ["Aider_Project", "tests"]
