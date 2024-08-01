@@ -26,7 +26,7 @@ Tests:
 import pytest
 import itertools
 from Aider_Project.main import execute, aider_runner  # Import the execute function from main.py
-from Aider_Project.execute_helper import is_nested_empty_list, validate_lengths # Import helper functions
+from Aider_Project.execute_helper import is_nested_empty_list, validate_lengths, generate_and_count_lists # Import helper functions
 import random
 from typing import Any, List, Union, Tuple, Dict
 from pathlib import Path
@@ -67,119 +67,6 @@ def generate_nested_lists() -> list:
     """
     # Randomly choose to return either an empty list or a nested lists with varying depths that are also each empty
     return [] if random.choice([True, False]) else [[[[] for _ in range(random.randint(0, 4))] for _ in range(random.randint(0, 4))] for _ in range(random.randint(0, 4))]
-
-def generate_and_count_lists(
-    files_by_directory_values: List[List[str]], 
-    test_file_names_values: List[List[str]],
-    record_output_values: Union[str, bool], 
-    record_test_output_values: Union[str, bool], 
-    run_tests_values: Union[str, bool]
-) -> Tuple[List[Union[bool]], List[Union[bool]], List[Union[bool]]]:
-    """
-    Generate record lists based on provided flags and count elements in nested lists.
-
-    Purpose: This function creates lists of True/False values for testing, based on flags and the 
-    number of files in nested lists. It ensures these lists are the right length to match 
-    the input data.
-
-    Used in: Helps test the behavior of the `execute` function with different settings. 
-    Found in the `test_generate_and_count_lists` and `test_execute_combined` test cases.
-
-    Parameters:
-    - files_by_directory_values: Lists of file names by directory.
-    - test_file_names_values: Lists of test file names.
-    - record_output_values: Flag to generate the record output list ("Mix", True, or False).
-    - record_test_output_values: Flag to generate the record test output list ("Mix", True, or False).
-    - run_tests_values: Flag to generate the run tests list ("Mix", True, or False).
-
-    Returns:
-    - Tuple with:
-        - List based on record_output_values.
-        - List based on record_test_output_values.
-        - List based on run_tests_values.
-
-    Raises:
-    - ValueError: If any flag is invalid or nested lists are empty.
-
-    Example Usage:
-        >>> # Generates lists of True values.
-        >>> generate_and_count_lists(
-        ...     [['file1.py', 'file2.py'], ['file3.py']],
-        ...     [['test1.py'], ['test2.py']],
-        ...     True, True, True
-        ... )
-        ([True, True, True], [True, True], [True, True])
-
-        >>> # Generates lists of False values.
-        >>> generate_and_count_lists(
-        ...     [['file1.py', 'file2.py'], ['file3.py']],
-        ...     [['test1.py'], ['test2.py']],
-        ...     False, False, False
-        ... )
-        ([False, False, False], [False, False], [False, False])
-
-        >>> # Generates mixed lists of True and False values.
-        >>> generate_and_count_lists(
-        ...     [['file1.py', 'file2.py'], ['file3.py']],
-        ...     [['test1.py'], ['test2.py']],
-        ...     "Mix", "Mix", "Mix"
-        ... )
-        ([True, False, True], [False, True], [True, False])
-
-        >>> # Raises ValueError for empty nested lists.
-        >>> try:
-        ...     generate_and_count_lists([[]], [[]], True, True, True)
-        ... except ValueError as e:
-        ...     print(e)
-        "files_by_directory_values cannot be empty or contain empty lists"
-
-        >>> # Raises ValueError for invalid flag.
-        >>> try:
-        ...     generate_and_count_lists(
-        ...         [['file.py']], [['test.py']], "Invalid", True, True
-        ...     )
-        ... except ValueError as e:
-        ...     print(e)
-        "Invalid value for record flag"
-    """
-
-    # Function to count elements in nested lists
-    def count_elements(nested_list: List[List[str]]) -> int:
-        count = 0  # Initialize count to zero
-        for sublist in nested_list:  # Iterate over each sublist
-            if not isinstance(sublist, list):  # Check if sublist is a list
-                raise ValueError("Invalid nested list structure")  # Raise error if not
-            count += len(sublist)  # Add the length of each sublist to the count
-        return count  # Return the total count
-    
-    # Validate input lists
-    if not files_by_directory_values or is_nested_empty_list(files_by_directory_values):  # Check if files_by_directory_values is empty or contains empty lists
-        raise ValueError("files_by_directory_values cannot be empty or contain empty lists")  # Raise error
-    if not test_file_names_values or is_nested_empty_list(test_file_names_values):  # Check if test_file_names_values is empty or contains empty lists
-        raise ValueError("test_file_names_values cannot be empty or contain empty lists")  # Raise error
-
-    # Calculate the number of elements in provided values
-    files_by_directory_count = count_elements(files_by_directory_values)  # Count elements in files_by_directory_values
-    test_file_names_count = count_elements(test_file_names_values)  # Count elements in test_file_names_values
-
-    # Generate lists based on record_output_values, record_test_output_values, and run_tests_values
-    def generate_record_list(values: Union[str, bool], count: int) -> List[Union[bool]]:
-        if values == "Mix":  # If the flag is "Mix"
-            return [random.choice([True, False]) for _ in range(count)]  # Generate a mixed list of True and False
-        elif values is True:  # If the flag is True
-            return [True] * count  # Generate a list of True values
-        elif values is False:  # If the flag is False
-            return [False] * count  # Generate a list of False values
-        else:  # If the flag is invalid
-            raise ValueError("Invalid value for record flag")  # Raise an error for invalid values
-
-    # Generate the output lists based on the provided flags
-    record_output_list = generate_record_list(record_output_values, files_by_directory_count)  # Generate record output list
-    record_test_output_list = generate_record_list(record_test_output_values, test_file_names_count)  # Generate record test output list
-    run_tests_list = generate_record_list(run_tests_values, test_file_names_count)  # Generate run tests list
-
-    # Return the generated lists
-    return record_output_list, record_test_output_list, run_tests_list
 
 
 def extract_classes_and_functions(file_path: str) -> Dict[str, Union[List[str], None]]:
@@ -275,153 +162,6 @@ def test_generate_nested_lists(iterations):
     for _ in range(iterations):
         nested_list = generate_nested_lists()  # Generate a nested list
         assert is_nested_empty_list(nested_list)  # Assert that the generated list is either empty or a nested empty list
-
-
-@pytest.mark.parametrize(
-    "files_by_directory_values, test_file_names_values, record_output_values, record_test_output_values, run_tests_values, expected_output, raises_exception",
-    [
-        # Test with all True flags: This test case checks if the function correctly generates lists of True values
-        # when all the flags are set to True.
-        (
-            [['math_functions.py', 'test.py'], ['another_script.py', 'yet_another_test.py']],
-            [['test.py'], ['yet_another_test.py']],
-            True, True, True,
-            ([True, True, True, True], [True, True], [True, True]),  # Expected output lists of True values
-            False  # No exception should be raised
-        ),
-        # Test with all False flags: This test case checks if the function correctly generates lists of False values
-        # when all the flags are set to False.
-        (
-            [['math_functions.py', 'test.py'], ['another_script.py', 'yet_another_test.py']],
-            [['test.py'], ['yet_another_test.py']],
-            False, False, False,
-            ([False, False, False, False], [False, False], [False, False]),  # Expected output lists of False values
-            False  # No exception should be raised
-        ),
-        # Test with Mix flags: This test case checks if the function generates mixed lists of True and False values
-        # when the flags are set to "Mix". The exact output cannot be predicted, so we do not provide expected lists.
-        (
-            [['math_functions.py', 'test.py'], ['another_script.py', 'yet_another_test.py']],
-            [['test.py'], ['yet_another_test.py']],
-            "Mix", "Mix", "Mix",
-            None,  # Output values will be checked separately as they are randomly generated
-            False  # No exception should be raised
-        ),
-        # Test with empty nested lists: This test case checks if the function raises a ValueError when provided with
-        # empty nested lists, which are considered invalid inputs.
-        (
-            [[]],  # Empty nested list for files_by_directory_values
-            [[]],  # Empty nested list for test_file_names_values
-            True, True, True,
-            None,  # Output values expected to raise an error
-            True  # A ValueError should be raised
-        ),
-        # Test with nested empty lists: This test case checks if the function raises a ValueError when provided with
-        # nested empty lists (i.e., lists containing empty lists), which are also considered invalid inputs.
-        (
-            [[[]]],  # Nested empty list for files_by_directory_values
-            [[[]]],  # Nested empty list for test_file_names_values
-            False, False, False,
-            None,  # Output values expected to raise an error
-            True  # A ValueError should be raised
-        ),
-        # Test with non-matching counts: This test case checks if the function correctly handles input lists where the
-        # number of files by directory does not match the number of test file names, but both have valid values.
-        (
-            [['math_functions.py'], ['another_script.py', 'yet_another_test.py']],
-            [['test.py'], ['yet_another_test.py']],
-            True, True, True,
-            ([True, True, True], [True, True], [True, True]),  # Expected output lists of True values
-            False  # No exception should be raised
-        ),
-        # Test with invalid flags: This test case checks if the function raises a ValueError when provided with
-        # invalid flag values that are neither "Mix", True, nor False.
-        (
-            [['math_functions.py', 'test.py'], ['another_script.py', 'yet_another_test.py']],
-            [['test.py'], ['yet_another_test.py']],
-            "Invalid", "Invalid", "Invalid",
-            None,  # Output values expected to raise an error
-            True  # A ValueError should be raised
-        ),
-        # Test with empty input lists: This test case checks if the function raises a ValueError when provided with
-        # completely empty input lists, which are invalid inputs.
-        (
-            [],  # Empty list for files_by_directory_values
-            [],  # Empty list for test_file_names_values
-            True, True, True,
-            None,  # Output values expected to raise an error
-            True  # A ValueError should be raised
-        ),
-        # Test with invalid flag values: This test case checks if the function raises a ValueError when one of the
-        # flags is invalid while the others are valid, ensuring robust validation of input flags.
-        (
-            [['file.py']],  # Valid list for files_by_directory_values
-            [['test.py']],  # Valid list for test_file_names_values
-            "Invalid", True, True,
-            None,  # Output values expected to raise an error
-            True  # A ValueError should be raised
-        ),
-        # Test with mismatched counts of files by directory and test file names: This test case checks if the function
-        # can handle cases where the number of directories does not match the number of test file name lists,
-        # ensuring correct list generation.
-        (
-            [['file1.py', 'file2.py'], ['file3.py']],
-            [['test1.py'], ['test2.py', 'test3.py']],
-            True, False, "Mix",
-            None,  # Output values will be checked separately
-            False  # No exception should be raised
-        ),
-    ]
-)
-def test_generate_and_count_lists(files_by_directory_values, test_file_names_values, record_output_values, record_test_output_values, run_tests_values, expected_output, raises_exception):
-    """
-    Combined test for generate_and_count_lists function.
-
-    Args:
-        files_by_directory_values: List of lists containing file names by directory.
-        test_file_names_values: List of lists containing test file names.
-        record_output_values: Flag to determine how to generate the record output list. Can be "Mix", True, or False.
-        record_test_output_values: Flag to determine how to generate the record test output list. Can be "Mix", True, or False.
-        run_tests_values: Flag to determine how to generate the run tests list. Can be "Mix", True, or False.
-        expected_output: Expected output of the function.
-        raises_exception: Whether the function is expected to raise an exception.
-    """
-    # Check if we expect an exception to be raised
-    if raises_exception:
-        with pytest.raises(ValueError):
-            # Call the function and expect it to raise ValueError
-            generate_and_count_lists(
-                files_by_directory_values, test_file_names_values,
-                record_output_values, record_test_output_values, run_tests_values
-            )
-    else:
-        # Call the function and store the result
-        result = generate_and_count_lists(
-            files_by_directory_values, test_file_names_values,
-            record_output_values, record_test_output_values, run_tests_values
-        )
-
-        # List of input flags and corresponding results to check
-        flags_and_results = [
-            (record_output_values, result[0], expected_output[0] if expected_output else None),
-            (record_test_output_values, result[1], expected_output[1] if expected_output else None),
-            (run_tests_values, result[2], expected_output[2] if expected_output else None)
-        ]
-
-        # Iterate over each flag and its corresponding result list
-        for flag, res_list, expected_list in flags_and_results:
-            # If the flag is "Mix", check if all elements are booleans
-            if flag == "Mix":
-                assert all(isinstance(x, bool) for x in res_list)
-            # If the flag is True, check if all elements are True
-            elif flag is True:
-                assert all(x is True for x in res_list)
-            # If the flag is False, check if all elements are False
-            elif flag is False:
-                assert all(x is False for x in res_list)
-            # Verify the output list matches the expected list when flag is True or False
-            else:
-                assert res_list == expected_list
 
 
 @pytest.mark.parametrize(
@@ -681,11 +421,6 @@ record_test_output_values = [True, False, "Mix"]  # Possible values for record_t
 run_tests_values = [True, False, "Mix"]  # Possible values for run_tests flag
 verbose_values = [True, False]  # Possible values for verbose flag
 model_provided_values = [True, False, "invalid_model_name"]  # Possible values for model provided flag
-instructions_values = [
-    ["in test.py: make me a very short code about Fibonacci", "in test.py: add inline comments to the code"],
-    ["in math_functions.py: make a very short code about adding 2 numbers"],
-    []  # Empty list representing no instructions
-]  # Possible values for instructions
 
 # Generate all combinations of these values
 test_data = list(itertools.product(
@@ -697,10 +432,9 @@ test_data = list(itertools.product(
     run_tests_values,  # All combinations of run_tests flag values
     verbose_values,  # All combinations of verbose flag values
     model_provided_values,  # All combinations of model provided values
-    instructions_values  # All combinations of instructions values
 ))
 
-def execute_with_exception_handling(directory_paths, files_by_directory, test_file_names, record_output, record_test_output, run_tests, verbose, model, instructions, expected_exception):
+def execute_with_exception_handling(directory_paths, files_by_directory, test_file_names, record_output, record_test_output, run_tests, verbose, model, expected_exception):
     """Helper function to execute with exception handling."""
     with pytest.raises(expected_exception):
         execute(
@@ -712,11 +446,10 @@ def execute_with_exception_handling(directory_paths, files_by_directory, test_fi
             test_file_names=test_file_names,
             verbose=verbose,
             model=model,
-            instructions=instructions
         )
 
-@pytest.mark.parametrize("directory_paths, files_by_directory, test_file_names, record_output, record_test_output, run_tests, verbose, model_provided, instructions", test_data)
-def test_execute_combined(temp_directory, model, directory_paths, files_by_directory, test_file_names, record_output, record_test_output, run_tests, verbose, model_provided, instructions):
+@pytest.mark.parametrize("directory_paths, files_by_directory, test_file_names, record_output, record_test_output, run_tests, verbose, model_provided", test_data)
+def test_execute_combined(temp_directory, model, directory_paths, files_by_directory, test_file_names, record_output, record_test_output, run_tests, verbose, model_provided):
     # Setup test directories and files
     if "dir1" in directory_paths:  # Check if "dir1" is in the directory paths
         directory_paths = temp_directory  # Use temporary directory if "dir1" is present
@@ -758,7 +491,6 @@ def test_execute_combined(temp_directory, model, directory_paths, files_by_direc
             test_file_names=test_file_names,
             verbose=verbose,
             model=model,
-            instructions=instructions
         )
         assert isinstance(script_outputs, dict)  # Assert that script outputs are a dictionary
         assert isinstance(test_outputs, dict)  # Assert that test outputs are a dictionary

@@ -43,3 +43,6 @@ dist/
 *.log
 **/*log*
 *log*/ 
+
+# Ignore folders with codetest in their name
+**/*codetest*/
