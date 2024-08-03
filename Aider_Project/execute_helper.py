@@ -1,4 +1,4 @@
-from typing import Any, Union, Tuple, List, Optional
+from typing import Any, Union, Tuple, List, Optional, Dict
 import random
 
 def is_nested_empty_list(lst: Any) -> bool:
@@ -266,10 +266,10 @@ def generate_and_count_lists(
 
         >>> # Raises ValueError for empty nested lists.
         >>> try:
-        ...     generate_and_count_lists([[]], [[]], True, True, True)
-        ... except ValueError as e:
-        ...     print(e)
-        "files_by_directory_values cannot be empty or contain empty lists"
+        .        directory_paths_1 = [
+            r'path\to\codetest', 
+            r'path\to\codetest-2'
+        ]ain empty lists"
 
         >>> # Raises ValueError for invalid flag.
         >>> try:
@@ -318,3 +318,185 @@ def generate_and_count_lists(
 
     # Return the generated lists
     return record_output_list, record_test_output_list, run_tests_list
+
+
+def organize_flags(directory_paths: List[str], 
+                   files_by_directory: List[List[str]], 
+                   record_output_flag: List[bool], 
+                   run_tests_flag: List[bool], 
+                   record_test_output_values: List[bool],
+                   test_file_names: List[List[str]]) -> Dict[str, Any]:
+    
+    """
+    The function organizes the flags based on the input structure of directories and files. 
+    Each flag (record_output_flag, run_tests_flag, record_test_output_values) is converted from a flat list 
+    to a nested list that mirrors the structure of `files_by_directory` and `test_file_names`.
+    
+    - `record_output_flag` is dependent on the total number of files in `files_by_directory`. 
+      It is sliced according to the number of files in each directory.
+    
+    - `run_tests_flag` and `record_test_output_values` are dependent on the number of test files in `test_file_names`. 
+      They are sliced according to the number of test files in each directory.
+    
+    The function first validates that the lengths of these flags match the expected number of files and test files. 
+    It then iterates through each directory and slices the flags accordingly, creating nested lists that 
+    correctly correspond to the structure of `files_by_directory` and `test_file_names`.
+    
+    Args:
+        directory_paths (List[str]): List of directory paths.
+        files_by_directory (List[List[str]]): Nested list where each sublist contains files for a directory.
+        record_output_flag (List[bool]): Flat list of record output flags for each file.
+        run_tests_flag (List[bool]): Flat list of run tests flags for each file.
+        record_test_output_values (List[bool]): Flat list of record test output values for each file.
+        test_file_names (List[List[str]]): Nested list of test files for each directory.
+    
+    Returns:
+        Dict[str, Any]: A dictionary containing the organized flags.
+    
+    Raises:
+        ValueError: If the lengths of run_tests_flag or record_test_output_values do not match the number of test files
+                    or if the length of record_output_flag does not match the number of files.
+    
+    Examples:
+        Test Case 1:
+        ```
+        # Define the input arguments for the function
+        directory_paths_1 = [
+            r'path\to\codetest', 
+            r'path\to\codetest-2'
+        ]
+        files_by_directory_1 = [
+            ["file1.py", "file2.py"], 
+            ["file3.py"]
+        ]
+        test_file_names_1 = [
+            ["test_file1.py"], 
+            ["test_file3.py"]
+        ]
+        record_output_flag_1 = [True, True, False]
+        run_tests_flag_1 = [False, False]
+        record_test_output_values_1 = [False, False]
+    
+        # Call the function to organize the flags for test case 1
+        organized_flags_1 = organize_flags(
+            directory_paths_1, 
+            files_by_directory_1, 
+            record_output_flag_1, 
+            run_tests_flag_1, 
+            record_test_output_values_1,
+            test_file_names_1
+        )
+    
+        # Print the organized flags for test case 1
+        print("Test Case 1 Output:")
+        print(organized_flags_1)
+        ```
+    
+        Expected Output for Test Case 1:
+        ```
+        {
+            'record_output_flag': [[True, True], [False]], 
+            'run_tests_flag': [[False], [False]], 
+            'record_test_output_values': [[False], [False]]
+        }
+        ```
+    
+        Explanation:
+        - The first directory has two regular files and one test file.
+        - The second directory has one regular file and one test file.
+        - `record_output_flag` is split into `[[True, True], [False]]` because there are 3 files in total, 2 in the first and one on the last directory.
+        - `run_tests_flag` is split into `[[False], [False]]` because there are 2 test files in total, 1 on each directory.
+        - `record_test_output_values` is split into `[[False], [False]]` because there are 2 test files in total, 1 on each directory.
+    
+        Test Case 2:
+        ```
+        # Define the input arguments for the function
+        directory_paths_1 = [
+            r'path\to\codetest', 
+            r'path\to\codetest-2'
+        ]
+        files_by_directory_2 = [
+            ["file1.py", "file3.py"], 
+            ["test_file1.py", "test_file3.py"]
+        ]
+        test_file_names_2 = [
+            [], 
+            ["test_file1.py", "test_file3.py"]
+        ]
+        record_output_flag_2 = [True, True, False, False]
+        run_tests_flag_2 = [True, True]
+        record_test_output_values_2 = [True, True]
+    
+        # Call the function to organize the flags for test case 2
+        organized_flags_2 = organize_flags(
+            directory_paths_2, 
+            files_by_directory_2, 
+            record_output_flag_2, 
+            run_tests_flag_2, 
+            record_test_output_values_2,
+            test_file_names_2
+        )
+    
+        # Print the organized flags for test case 2
+        print("Test Case 2 Output:")
+        print(organized_flags_2)
+        ```
+    
+        Expected Output for Test Case 2:
+        ```
+        {
+            'record_output_flag': [[True, True], [False, False]], 
+            'run_tests_flag': [[], [True, True]], 
+            'record_test_output_values': [[], [True, True]]
+        }
+        ```
+    
+        Explanation:
+        - The first directory has two regular files and no test files.
+        - The second directory has no regular files and two test files.
+        - `record_output_flag` is split into `[[True, True], [False, False]]` because there are 4 files in total, 2 for each directory.
+        - `run_tests_flag` is split into `[[], [True, True]]` because there are 2 test files in total, only on the second directory.
+        - `record_test_output_values` is split into `[[], [True, True]]` because there are 2 test files in total, only on the second directory.
+    
+    """
+
+    # Initialize nested lists to store the flags
+    nested_record_output_flag = []
+    nested_run_tests_flag = []
+    nested_record_test_output_values = []
+
+    # Validate lengths of input lists
+    total_files = sum(len(files) for files in files_by_directory)
+    total_test_files = sum(len(tests) for tests in test_file_names)
+
+    if len(record_output_flag) != total_files:
+        raise ValueError("Length of record_output_flag must match the total number of files.")
+    if len(run_tests_flag) != total_test_files:
+        raise ValueError("Length of run_tests_flag must match the total number of test files.")
+    if len(record_test_output_values) != total_test_files:
+        raise ValueError("Length of record_test_output_values must match the total number of test files.")
+
+    # Initialize index trackers for the flags
+    file_index = 0
+    test_file_index = 0
+
+    # Iterate over each directory and its corresponding files
+    for i, files in enumerate(files_by_directory):
+        num_files = len(files)
+        num_test_files = len(test_file_names[i])
+
+        # Slice the flat lists to get the flags for the current directory
+        nested_record_output_flag.append(record_output_flag[file_index:file_index + num_files])
+        nested_run_tests_flag.append(run_tests_flag[test_file_index:test_file_index + num_test_files])
+        nested_record_test_output_values.append(record_test_output_values[test_file_index:test_file_index + num_test_files])
+
+        # Update the indices
+        file_index += num_files
+        test_file_index += num_test_files
+
+    # Return a dictionary with the organized flags
+    return {
+        "record_output_flag": nested_record_output_flag,
+        "run_tests_flag": nested_run_tests_flag,
+        "record_test_output_values": nested_record_test_output_values
+    }

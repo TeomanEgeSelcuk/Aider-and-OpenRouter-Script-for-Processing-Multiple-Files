@@ -11,6 +11,7 @@ Proposed Unit Tests:
 4. Test with record_test_output set to False: Ensure the function runs the test files without capturing their outputs.
 5. Test with an invalid script path: Verify that the function handles invalid script paths gracefully.
 6. Test with an invalid test file path: Verify that the function handles invalid test file paths gracefully.
+7. Test with script_path set to None: Ensure the function handles None script path correctly without running the script.
 
 Explanation:
 ============
@@ -58,65 +59,117 @@ def test_example():
 
 # Test running a script and optionally recording its output with different combinations of flags and paths
 @pytest.mark.parametrize(
-    "script_path, test_file_paths, record_output, record_test_output, run_tests_values, expected_exception, expected_script_stdout, expected_test_stdout",
+    "script_path, test_file_path, record_output, record_test_output, run_tests_values, expected_exception, expected_script_stdout, expected_test_stdout",
     [
-        # Valid script and no test files
+        # Test Case 1: Valid script and no test files
+        # - Runs a valid script and records its output.
+        # - No test files are specified.
+        # - Expects "Hello from script" in script output and no test output.
         ("valid", None, True, True, True, None, "Hello from script", None),
-        # Valid script and valid test files
+        
+        # Test Case 2: Valid script and valid test files
+        # - Runs a valid script and valid test files.
+        # - Records output for both script and test files.
+        # - Expects "Hello from script" in script output and "1 passed" in test output.
         ("valid", "valid", True, True, True, None, "Hello from script", "1 passed"),
-        # Record output set to False
+        
+        # Test Case 3: Record script output set to False
+        # - Runs a valid script and valid test files.
+        # - Does not record the script output but records the test output.
+        # - Expects an empty script output and "1 passed" in test output.
         ("valid", "valid", False, True, True, None, "", "1 passed"),
-        # Record test output set to False
+        
+        # Test Case 4: Record test output set to False
+        # - Runs a valid script and valid test files.
+        # - Records the script output but does not record the test output.
         ("valid", "valid", True, False, True, None, "Hello from script", ""),
-        # Invalid script path
+        
+        # Test Case 5: Invalid script path
+        # - Attempts to run an invalid script path.
+        # - Expects an exception to be raised and no output recorded.
         ("invalid", "valid", True, True, True, Exception, "", ""),
-        # Invalid test file path
+        
+        # Test Case 6: Invalid test file path
+        # - Runs a valid script and attempts to run an invalid test file path.
+        # - Expects an exception to be raised for the test file and no test output.
         ("valid", "invalid", True, True, True, Exception, "Hello from script", ""),
-        # Valid script without running tests
+        
+        # Test Case 7: Valid script without running tests
         ("valid", "valid", True, True, False, None, "Hello from script", None),
+        
+        # Test Case 8: Script path set to None and no test files
+        # - Does not run any script but attempts to run tests.
+        # - Expects no script output and no test output.
+        (None, None, True, True, True, None, "", None),
+        
+        # Test Case 9: Script path set to None with valid test files
+        # - Does not run any script but runs valid test files.
+        # - Expects no script output and "1 passed" in test output.
+        (None, "valid", True, True, True, None, "", "1 passed"),
+        
+        # Test Case 10: Script path set to None and record_test_output set to False
+        # - Does not run any script but runs valid test files.
+        # - Does not record the test output.
+        # - Expects no script output and no test output.
+        (None, "valid", True, False, True, None, "", ""),
     ]
 )
 def test_run_script_and_record_output(
-    temp_script, temp_test_file, script_path, test_file_paths, record_output, record_test_output, run_tests_values, expected_exception, expected_script_stdout, expected_test_stdout):
+    temp_script, temp_test_file, script_path, test_file_path, record_output, record_test_output, run_tests_values, expected_exception, expected_script_stdout, expected_test_stdout):
     """Test running a script and optionally recording the output with different combinations of flags and paths."""
     
-    # Determine the actual paths for the script and test files
-    script_file_path = str(temp_script) if script_path == "valid" else "invalid_script_path.py"
-    test_file_list = [str(temp_test_file)] if test_file_paths == "valid" else ["invalid_test_file_path.py"] if test_file_paths == "invalid" else None
+    # Determine the actual path for the script:
+    # - If script_path is "valid", use the path of the temporary script (temp_script).
+    # - If script_path is "invalid", use a deliberately invalid path ("invalid_script_path.py").
+    # - If script_path is None, set the path to None.
+    script_file_path = str(temp_script) if script_path == "valid" else "invalid_script_path.py" if script_path == "invalid" else None
+    
+    # Determine the actual path for the test file:
+    # - If test_file_path is "valid", use the path of the temporary test file (temp_test_file).
+    # - If test_file_path is "invalid", use a deliberately invalid path ("invalid_test_file_path.py").
+    # - If test_file_path is None, set the path to None.
+    test_file_path = str(temp_test_file) if test_file_path == "valid" else "invalid_test_file_path.py" if test_file_path == "invalid" else None
 
-    # Run the test and capture the outputs
+    # Run the function and capture the outputs:
     if expected_exception:
+        # If an exception is expected, use pytest.raises to assert that the expected exception is raised.
         with pytest.raises(expected_exception):
             run_script_and_record_output(
-                script_path=script_file_path,
-                record_output=record_output,
-                test_file_paths=test_file_list,
-                record_test_output=record_test_output,
-                run_tests_values=run_tests_values
+                script_path=script_file_path,           # Path to the script to run
+                record_output=record_output,            # Whether to record the script output
+                test_file_path=test_file_path,          # Path to the test file to run
+                record_test_output=record_test_output,  # Whether to record the test file output
+                run_tests_values=run_tests_values       # Whether to run the test file
             )
     else:
+        # If no exception is expected, run the function and capture its outputs.
         script_output, test_outputs = run_script_and_record_output(
-            script_path=script_file_path,
-            record_output=record_output,
-            test_file_paths=test_file_list,
-            record_test_output=record_test_output,
-            run_tests_values=run_tests_values
+            script_path=script_file_path,           # Path to the script to run
+            record_output=record_output,            # Whether to record the script output
+            test_file_path=test_file_path,          # Path to the test file to run
+            record_test_output=record_test_output,  # Whether to record the test file output
+            run_tests_values=run_tests_values       # Whether to run the test file
         )
 
-        # Validate script output
+        # Validate the script output:
         if record_output:
+            # If recording the script output, check that the expected output is in the script's stdout.
             assert expected_script_stdout in script_output["stdout"]
         else:
+            # If not recording the script output, assert that the script output should be empty.
             assert script_output == {"stdout": "", "stderr": ""}
         
-        # Validate test output
+        # Validate the test output
         if run_tests_values:
-            if record_test_output and test_file_paths == "valid":
-                assert expected_test_stdout in test_outputs[str(temp_test_file)]["stdout"]
+            if record_test_output and test_file_path == str(temp_test_file):
+                # If recording the test output and the test file path is valid, check that the expected output is in the test's stdout
+                assert expected_test_stdout in test_outputs[test_file_path]["stdout"]
             else:
                 # Ensure the test file path exists in the test_outputs dictionary
-                assert test_outputs.get(str(temp_test_file), {"stdout": "", "stderr": ""}) == {"stdout": "", "stderr": ""}
+                # and the output should be empty or match the expected output for invalid paths.
+                assert test_outputs.get(test_file_path, {"stdout": "", "stderr": ""}) == {"stdout": "", "stderr": ""}
         else:
+            # If not running tests, the test outputs should be empty.
             assert test_outputs == {}
 
 # Run the tests

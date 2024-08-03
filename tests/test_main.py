@@ -358,7 +358,6 @@ def test_aider_runner(
     model = mock_environment["model"]  # Get the mock model from the fixture
     temp_dir = mock_environment["temp_dir"]  # Get the temporary directory
 
-
     # Create mock files in the temporary directory
     dir_path = Path(temp_dir) / directory
     dir_path.mkdir(parents=True, exist_ok=True)  # Create the directory path

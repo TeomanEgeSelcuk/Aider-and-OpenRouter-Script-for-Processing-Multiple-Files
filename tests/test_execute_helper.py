@@ -1,4 +1,4 @@
-from Aider_Project.execute_helper import is_nested_empty_list, validate_lengths, check_nested_lists_and_flat_list, generate_and_count_lists # Import helper functions
+from Aider_Project.execute_helper import is_nested_empty_list, validate_lengths, check_nested_lists_and_flat_list, generate_and_count_lists, organize_flags # Import helper functions
 import pytest 
 
 # Parameterized data for is_nested_empty_list function
@@ -225,3 +225,86 @@ def test_generate_and_count_lists(files_by_directory_values, test_file_names_val
             # Verify the output list matches the expected list when flag is True or False
             else:
                 assert res_list == expected_list
+
+
+@pytest.mark.parametrize("directory_paths, files_by_directory, test_file_names, record_output_flag, run_tests_flag, record_test_output_values, expected", [
+    # Test Case 1: Regular and test files distributed across two directories
+    (
+        [r'path\to\codetest', r'path\to\codetest-2'],
+        [["file1.py", "file2.py"], ["file3.py"]],
+        [["test_file1.py"], ["test_file3.py"]],
+        [True, True, False],
+        [False, False],
+        [False, False],
+        {
+            'record_output_flag': [[True, True], [False]], 
+            'run_tests_flag': [[False], [False]], 
+            'record_test_output_values': [[False], [False]]
+        }
+    ),
+    # Test Case 2: Regular files in the first directory and test files in the second
+    (
+        [r'path\to\codetest', r'path\to\codetest-2'],
+        [["file1.py", "file3.py"], ["test_file1.py", "test_file3.py"]],
+        [[], ["test_file1.py", "test_file3.py"]],
+        [True, True, False, False],
+        [True, True],
+        [True, True],
+        {
+            'record_output_flag': [[True, True], [False, False]], 
+            'run_tests_flag': [[], [True, True]], 
+            'record_test_output_values': [[], [True, True]]
+        }
+    ),
+    # Test Case 3: No test files
+    (
+        [r'path\to\codetest'],
+        [["file1.py", "file2.py"]],
+        [[]],
+        [True, False],
+        [],
+        [],
+        {
+            'record_output_flag': [[True, False]], 
+            'run_tests_flag': [[]], 
+            'record_test_output_values': [[]]
+        }
+    ),
+    # Test Case 4: Mismatched lengths for record_output_flag
+    (
+        [r'path\to\codetest', r'path\to\codetest-2'],
+        [["file1.py", "file2.py"], ["file3.py"]],
+        [["test_file1.py"], ["test_file3.py"]],
+        [True, True],  # Incorrect length
+        [False, False],
+        [False, False],
+        "error"
+    ),
+    # Test Case 5: Mismatched lengths for run_tests_flag and record_test_output_values
+    (
+        [r'path\to\codetest', r'path\to\codetest-2'],
+        [["file1.py", "file2.py"], ["file3.py"]],
+        [["test_file1.py"], ["test_file3.py"]],
+        [True, True, False],
+        [False],  # Incorrect length
+        [False, False],
+        "error"
+    ),
+])
+def test_organize_flags(directory_paths, files_by_directory, test_file_names, record_output_flag, run_tests_flag, record_test_output_values, expected):
+    """
+    Test function for `organize_flags`.
+    
+    This test covers various cases including:
+    - Correct organization of flags with different numbers of regular and test files.
+    - Validation for mismatched lengths of input lists.
+    
+    The function uses pytest parameterization to run multiple test cases with different inputs.
+    """
+    if expected == "error":
+        with pytest.raises(ValueError):
+            organize_flags(directory_paths, files_by_directory, record_output_flag, run_tests_flag, record_test_output_values, test_file_names)
+    else:
+        result = organize_flags(directory_paths, files_by_directory, record_output_flag, run_tests_flag, record_test_output_values, test_file_names)
+        # Assert the results match the expected values
+        assert result == expected
