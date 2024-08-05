@@ -225,8 +225,7 @@ def test_generate_and_count_lists(files_by_directory_values, test_file_names_val
             # Verify the output list matches the expected list when flag is True or False
             else:
                 assert res_list == expected_list
-
-
+                
 @pytest.mark.parametrize("directory_paths, files_by_directory, test_file_names, record_output_flag, run_tests_flag, record_test_output_values, expected", [
     # Test Case 1: Regular and test files distributed across two directories
     (
@@ -290,6 +289,80 @@ def test_generate_and_count_lists(files_by_directory_values, test_file_names_val
         [False, False],
         "error"
     ),
+    # Test Case 6: files_by_directory is None, record_output_flag is not None
+    (
+        None,
+        None,
+        [["test_file1.py"], ["test_file3.py"]],
+        [True, False],  # Should raise an error
+        [True, False],
+        [True, False],
+        "error"
+    ),
+    # Test Case 7: test_file_names is None, run_tests_flag and record_test_output_values are not None
+    (
+        [r'path\to\codetest'],
+        [["file1.py"]],
+        None,
+        [True],
+        [True],  # Should raise an error
+        [True],
+        "error"
+    ),
+    # Test Case 8: All groups are None
+    (
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        "error"
+    ),
+    # Test Case 9: files_by_directory is not None, but record_output_flag is None
+    (
+        [r'path\to\codetest'],
+        [["file1.py"]],
+        [["test_file1.py"]],
+        None,  # Should raise an error
+        [True],
+        [True],
+        "error"
+    ),
+    # Test Case 10: test_file_names is not None, but run_tests_flag is None
+    (
+        [r'path\to\codetest'],
+        [["file1.py"]],
+        [["test_file1.py"]],
+        [True],
+        None,  # Should raise an error
+        [True],
+        "error"
+    ),
+    # Test Case 11: test_file_names is not None, but record_test_output_values is None
+    (
+        [r'path\to\codetest'],
+        [["file1.py"]],
+        [["test_file1.py"]],
+        [True],
+        [True],
+        None,  # Should raise an error
+        "error"
+    ),
+    # Test Case 12: Only one file and one test file
+    (
+        [r'path\to\codetest'],
+        [["file1.py"]],
+        [["test_file1.py"]],
+        [True],
+        [True],
+        [True],
+        {
+            'record_output_flag': [[True]], 
+            'run_tests_flag': [[True]], 
+            'record_test_output_values': [[True]]
+        }
+    ),
 ])
 def test_organize_flags(directory_paths, files_by_directory, test_file_names, record_output_flag, run_tests_flag, record_test_output_values, expected):
     """
@@ -298,6 +371,7 @@ def test_organize_flags(directory_paths, files_by_directory, test_file_names, re
     This test covers various cases including:
     - Correct organization of flags with different numbers of regular and test files.
     - Validation for mismatched lengths of input lists.
+    - Validation for input constraints and dependencies.
     
     The function uses pytest parameterization to run multiple test cases with different inputs.
     """

@@ -393,106 +393,433 @@ def test_aider_runner(
         # Add a delay of one second after the else statement to avoid API rate limit issues
         time.sleep(1)
 
-# Fixtures for creating temporary directories and files
+# # Fixtures for creating temporary directories and files
+# @pytest.fixture
+# def temp_directory(tmp_path):
+#     # Use pytest's built-in tmp_path fixture to create a temporary directory for tests
+#     dir1 = tmp_path / "dir1"  # Create a subdirectory named 'dir1' within the temporary directory
+#     dir2 = tmp_path / "dir2"  # Create another subdirectory named 'dir2'
+#     dir1.mkdir()  # Actually create 'dir1' on the filesystem
+#     dir2.mkdir()  # Actually create 'dir2' on the filesystem
+#     # Create a file named 'math_functions.py' in 'dir1' with a simple print statement
+#     (dir1 / "math_functions.py").write_text("print('Math Functions')")
+#     # Create a test file named 'test.py' in 'dir1' with a simple print statement
+#     (dir1 / "test.py").write_text("print('Test File')")
+#     # Create another script file in 'dir2' with a simple print statement
+#     (dir2 / "another_script.py").write_text("print('Another Script')")
+#     # Create another test file in 'dir2' with a simple print statement
+#     (dir2 / "yet_another_test.py").write_text("print('Yet Another Test')")
+#     return [str(dir1), str(dir2)]  # Return the paths of the created directories as strings
+
+# # Define possible values for each parameter
+# directory_paths_values = [["invalid_dir"], ["dir1", "dir2"]]  # Possible values for directory paths
+# files_by_directory_values = [[['math_functions.py', 'test.py'], ['another_script.py', 'yet_another_test.py']], [['invalid_file.py'], ['invalid_script.py']], generate_nested_lists()]  # Possible values for files by directory
+# test_file_names_values = [[['test.py'], ['yet_another_test.py']], generate_nested_lists()]  # Possible values for test file names
+# record_output_values = [True, False, "Mix"]  # Possible values for record_output flag
+# record_test_output_values = [True, False, "Mix"]  # Possible values for record_test_output flag
+# run_tests_values = [True, False, "Mix"]  # Possible values for run_tests flag
+# verbose_values = [True, False]  # Possible values for verbose flag
+# model_provided_values = [True, False, "invalid_model_name"]  # Possible values for model provided flag
+
+# # Generate all combinations of these values
+# test_data = list(itertools.product(
+#     directory_paths_values,  # All combinations of directory paths values
+#     files_by_directory_values,  # All combinations of files by directory values
+#     test_file_names_values,  # All combinations of test file names values
+#     record_output_values,  # All combinations of record_output flag values
+#     record_test_output_values,  # All combinations of record_test_output flag values
+#     run_tests_values,  # All combinations of run_tests flag values
+#     verbose_values,  # All combinations of verbose flag values
+#     model_provided_values,  # All combinations of model provided values
+# ))
+
+# def execute_with_exception_handling(directory_paths, files_by_directory, test_file_names, record_output, record_test_output, run_tests, verbose, model, expected_exception):
+#     """Helper function to execute with exception handling."""
+#     with pytest.raises(expected_exception):
+#         execute(
+#             directory_paths=directory_paths,
+#             files_by_directory=files_by_directory,
+#             record_output=record_output,
+#             record_test_output=record_test_output,
+#             run_tests=run_tests,
+#             test_file_names=test_file_names,
+#             verbose=verbose,
+#             model=model,
+#         )
+
+# @pytest.mark.parametrize("directory_paths, files_by_directory, test_file_names, record_output, record_test_output, run_tests, verbose, model_provided", test_data)
+# def test_execute_combined(temp_directory, model, directory_paths, files_by_directory, test_file_names, record_output, record_test_output, run_tests, verbose, model_provided):
+#     # Setup test directories and files
+#     if "dir1" in directory_paths:  # Check if "dir1" is in the directory paths
+#         directory_paths = temp_directory  # Use temporary directory if "dir1" is present
+    
+#     if model_provided == "invalid_model_name":  # Check if an invalid model name is provided
+#         model = Model("invalid_model_name")  # Set model to an invalid model name
+#     elif model_provided:  # Check if a model is provided
+#         model = model  # Use the provided model
+#     else:
+#         model = None  # Set model to None if no model is provided
+    
+#     # Call the generate_and_count_lists function which overwrites the record_output, record_test_output, and run_tests lists
+#     record_output, record_test_output, run_tests = generate_and_count_lists(
+#         files_by_directory, test_file_names, record_output, record_test_output, run_tests
+#     )
+
+#     # Execute the function with the provided parameters
+#     if directory_paths == ["invalid_dir"]:  # Check if the directory paths are invalid
+#         execute_with_exception_handling(directory_paths, files_by_directory, test_file_names, record_output, record_test_output, run_tests, verbose, model, instructions, Exception)
+#     elif files_by_directory == [['invalid_file.py'], ['invalid_script.py']]:  # Check if the files are invalid
+#         execute_with_exception_handling(directory_paths, files_by_directory, test_file_names, record_output, record_test_output, run_tests, verbose, model, instructions, Exception)
+#     elif validate_lengths(files_by_directory, run_tests_values, record_test_output) and validate_lengths(files_by_directory, record_output_values):  # Check if the lengths of the lists do not match
+#         execute_with_exception_handling(directory_paths, files_by_directory, test_file_names, record_output, record_test_output, run_tests, verbose, model, instructions, ValueError)
+#     elif is_nested_empty_list(files_by_directory) and is_nested_empty_list(test_file_names):  # Check if both files and test file lists are empty
+#         execute_with_exception_handling(directory_paths, files_by_directory, test_file_names, record_output, record_test_output, run_tests, verbose, model, instructions, Exception)
+#     elif not model_provided:  # Check if the model is not provided
+#         execute_with_exception_handling(directory_paths, files_by_directory, test_file_names, record_output, record_test_output, run_tests, verbose, model, instructions, ValueError)
+#     elif model_provided == "invalid_model_name":  # Check if the model provided is invalid
+#         execute_with_exception_handling(directory_paths, files_by_directory, test_file_names, record_output, record_test_output, run_tests, verbose, model, instructions, Exception)
+#     elif files_by_directory == [['math_functions.py', ['test.py']], ['another_script.py']]:  # Check if the nested list structure is invalid
+#         execute_with_exception_handling(directory_paths, files_by_directory, test_file_names, record_output, record_test_output, run_tests, verbose, model, instructions, Exception)
+#     else:  # For valid inputs
+#         script_outputs, test_outputs = execute(
+#             directory_paths=directory_paths,
+#             files_by_directory=files_by_directory,
+#             record_output=record_output,
+#             record_test_output=record_test_output,
+#             run_tests=run_tests,
+#             test_file_names=test_file_names,
+#             verbose=verbose,
+#             model=model,
+#         )
+#         assert isinstance(script_outputs, dict)  # Assert that script outputs are a dictionary
+#         assert isinstance(test_outputs, dict)  # Assert that test outputs are a dictionary
+
+
 @pytest.fixture
 def temp_directory(tmp_path):
-    # Use pytest's built-in tmp_path fixture to create a temporary directory for tests
-    dir1 = tmp_path / "dir1"  # Create a subdirectory named 'dir1' within the temporary directory
-    dir2 = tmp_path / "dir2"  # Create another subdirectory named 'dir2'
-    dir1.mkdir()  # Actually create 'dir1' on the filesystem
-    dir2.mkdir()  # Actually create 'dir2' on the filesystem
-    # Create a file named 'math_functions.py' in 'dir1' with a simple print statement
-    (dir1 / "math_functions.py").write_text("print('Math Functions')")
-    # Create a test file named 'test.py' in 'dir1' with a simple print statement
-    (dir1 / "test.py").write_text("print('Test File')")
-    # Create another script file in 'dir2' with a simple print statement
-    (dir2 / "another_script.py").write_text("print('Another Script')")
-    # Create another test file in 'dir2' with a simple print statement
-    (dir2 / "yet_another_test.py").write_text("print('Yet Another Test')")
-    return [str(dir1), str(dir2)]  # Return the paths of the created directories as strings
+    """
+    Fixture to create a temporary directory structure for testing.
 
-# Define possible values for each parameter
-directory_paths_values = [["invalid_dir"], ["dir1", "dir2"]]  # Possible values for directory paths
-files_by_directory_values = [[['math_functions.py', 'test.py'], ['another_script.py', 'yet_another_test.py']], [['invalid_file.py'], ['invalid_script.py']], generate_nested_lists()]  # Possible values for files by directory
-test_file_names_values = [[['test.py'], ['yet_another_test.py']], generate_nested_lists()]  # Possible values for test file names
-record_output_values = [True, False, "Mix"]  # Possible values for record_output flag
-record_test_output_values = [True, False, "Mix"]  # Possible values for record_test_output flag
-run_tests_values = [True, False, "Mix"]  # Possible values for run_tests flag
-verbose_values = [True, False]  # Possible values for verbose flag
-model_provided_values = [True, False, "invalid_model_name"]  # Possible values for model provided flag
+    Creates multiple directories with normal files and test files.
+    """
+    # Create main directories
+    dir1 = tmp_path / "dir1"
+    dir2 = tmp_path / "dir2"
+    dir1.mkdir()
+    dir2.mkdir()
 
-# Generate all combinations of these values
-test_data = list(itertools.product(
-    directory_paths_values,  # All combinations of directory paths values
-    files_by_directory_values,  # All combinations of files by directory values
-    test_file_names_values,  # All combinations of test file names values
-    record_output_values,  # All combinations of record_output flag values
-    record_test_output_values,  # All combinations of record_test_output flag values
-    run_tests_values,  # All combinations of run_tests flag values
-    verbose_values,  # All combinations of verbose flag values
-    model_provided_values,  # All combinations of model provided values
-))
+    # Create normal files in dir1
+    file1 = dir1 / "file1.py"
+    file1.write_text("print('Hello from file1')")
+    file2 = dir1 / "file2.py"
+    file2.write_text("print('Hello from file2')")
 
-def execute_with_exception_handling(directory_paths, files_by_directory, test_file_names, record_output, record_test_output, run_tests, verbose, model, expected_exception):
-    """Helper function to execute with exception handling."""
-    with pytest.raises(expected_exception):
-        execute(
-            directory_paths=directory_paths,
-            files_by_directory=files_by_directory,
-            record_output=record_output,
-            record_test_output=record_test_output,
-            run_tests=run_tests,
-            test_file_names=test_file_names,
-            verbose=verbose,
-            model=model,
+    # Create normal files in dir2
+    file3 = dir2 / "file3.py"
+    file3.write_text("print('Hello from file3')")
+
+    # Create test files in dir1
+    test_file1 = dir1 / "test_file1.py"
+    test_file1.write_text(textwrap.dedent("""
+    import pytest
+    def test_example():
+        assert 1 == 1
+    """))
+
+    # Create test files in dir2
+    test_file3 = dir2 / "test_file3.py"
+    test_file3.write_text(textwrap.dedent("""
+    import pytest
+    def test_example():
+        assert 1 == 1
+    """))
+
+    return {
+        "directory_paths": [str(dir1), str(dir2)],
+        "files_by_directory": [["file1.py", "file2.py"], ["file3.py"]],
+        "test_file_names": [["test_file1.py"], ["test_file3.py"]],
+    }
+
+@pytest.fixture
+def model():
+    """
+    Fixture to create the model instance for testing.
+
+    Returns:
+        Model: An instance of the Model class.
+    """
+    return Model("openrouter/deepseek/deepseek-coder")
+
+@pytest.mark.parametrize(
+    "directory_paths, files_by_directory, record_output_flag, run_tests_flag, test_file_names, record_test_output_values, verbose, instructions, expected_script_outputs, expected_test_outputs, expected_exception",
+    [
+        # Test case 1: Basic usage without tests
+        # - Runs the scripts in two directories and records their outputs without running any tests.
+        (
+            ["dir1", "dir2"],  # directory_paths
+            [["file1.py", "file2.py"], ["file3.py"]],  # files_by_directory
+            [True, True, True],  # record_output_flag
+            None,  # run_tests_flag
+            None,  # test_file_names
+            None,  # record_test_output_values
+            False,  # verbose
+            ["Modify file1.py to add a function `def added_function(): print('Added function to file1')`"],  # instructions
+            {
+                'dir1/file1.py': {'stdout': 'Hello from file1\nAdded function to file1\n', 'stderr': ''},
+                'dir1/file2.py': {'stdout': 'Hello from file2\n', 'stderr': ''},
+                'dir2/file3.py': {'stdout': 'Hello from file3\n', 'stderr': ''}
+            },  # expected_script_outputs
+            {},  # expected_test_outputs
+            None  # expected_exception
+        ),
+        # Test case 2: Running scripts and tests with output recording
+        # - Runs the scripts and their corresponding tests, recording both the script and test outputs.
+        (
+            ["dir1", "dir2"],  # directory_paths
+            [["file1.py"], ["file3.py"]],  # files_by_directory
+            [True, True],  # record_output_flag
+            [True, True],  # run_tests_flag
+            [["test_file1.py"], ["test_file3.py"]],  # test_file_names
+            [True, True],  # record_test_output_values
+            False,  # verbose
+            [
+                "Modify file1.py to add a function `def added_function(): print('Added function to file1')`",
+                "Modify file3.py to add a function `def added_function(): print('Added function to file3')`",
+                "Modify test_file1.py to add a pytest function to test file1.py which calls added_function and prints 'Added function to file1'",
+                "Modify test_file3.py to add a pytest function to test file3.py which calls added_function and prints 'Added function to file3'"
+            ],  # instructions
+            {
+                'dir1/file1.py': {'stdout': 'Hello from file1\nAdded function to file1\n', 'stderr': ''},
+                'dir2/file3.py': {'stdout': 'Hello from file3\nAdded function to file3\n', 'stderr': ''}
+            },  # expected_script_outputs
+            {
+                'dir1/test_file1.py': {'stdout': '============================= test session starts =============================\nplatform win32 -- Python ...t1/test_file1.py . [100%]\n\n============================== 1 passed in 0.01s ===============================\n', 'stderr': ''},
+                'dir2/test_file3.py': {'stdout': '============================= test session starts =============================\nplatform win32 -- Python ...t2/test_file3.py . [100%]\n\n============================== 1 passed in 0.01s ===============================\n', 'stderr': ''}
+            },  # expected_test_outputs
+            None  # expected_exception
+        ),
+        # Test case 3: Running scripts without recording their output
+        # - Runs the script without recording its output and does not run any tests.
+        (
+            ["dir1"],  # directory_paths
+            [["file1.py"]],  # files_by_directory
+            [False],  # record_output_flag
+            [False],  # run_tests_flag
+            None,  # test_file_names
+            None,  # record_test_output_values
+            False,  # verbose
+            ["Modify file1.py to add a function `def added_function(): print('Added function to file1')`"],  # instructions
+            {
+                'dir1/file1.py': {'stdout': '', 'stderr': ''}
+            },  # expected_script_outputs
+            {},  # expected_test_outputs
+            None  # expected_exception
+        ),
+        # Test case 4: Running scripts with instructions
+        # - Runs the script with specific instructions to modify the script file.
+        (
+            ["dir1"],  # directory_paths
+            [["file1.py"]],  # files_by_directory
+            [True],  # record_output_flag
+            [False],  # run_tests_flag
+            None,  # test_file_names
+            None,  # record_test_output_values
+            False,  # verbose
+            ["Add a function to file1.py `def added_function(): print('Added function to file1')`"],  # instructions
+            {
+                'dir1/file1.py': {'stdout': 'Hello from file1\nAdded function to file1\n', 'stderr': ''}
+            },  # expected_script_outputs
+            {},  # expected_test_outputs
+            None  # expected_exception
+        ),
+        # Test case 5: Complex case with mixed settings
+        # - Demonstrates a complex scenario where different settings are applied for recording output and running tests across directories.
+        (
+            ["dir1", "dir2"],  # directory_paths
+            [["file1.py", "file2.py"], ["file3.py"]],  # files_by_directory
+            [True, False],  # record_output_flag
+            [True, False],  # run_tests_flag
+            [["test_file1.py", "test_file2.py"], []],  # test_file_names
+            [True, False],  # record_test_output_values
+            False,  # verbose
+            [
+                "Modify file1.py to add a function `def added_function(): print('Added function to file1')`",
+                "Modify file3.py to add a function `def added_function(): print('Added function to file3')`"
+            ],  # instructions
+            {
+                'dir1/file1.py': {'stdout': 'Hello from file1\nAdded function to file1\n', 'stderr': ''},
+                'dir1/file2.py': {'stdout': '', 'stderr': ''},
+                'dir2/file3.py': {'stdout': '', 'stderr': ''}
+            },  # expected_script_outputs
+            {
+                'dir1/test_file1.py': {'stdout': '============================= test session starts =============================\nplatform win32 -- Python ...t1/test_file1.py . [100%]\n\n============================== 1 passed in 0.01s ===============================\n', 'stderr': ''},
+                'dir1/test_file2.py': {'stdout': '============================= test session starts =============================\nplatform win32 -- Python ...t1/test_file2.py . [100%]\n\n============================== 1 passed in 0.01s ===============================\n', 'stderr': ''}
+            },  # expected_test_outputs
+            None  # expected_exception
+        ),
+        # Test case 6: Empty directory paths
+        # - Tests the scenario where the directory paths list is empty, expecting a ValueError.
+        (
+            [],  # directory_paths
+            [],  # files_by_directory
+            [],  # record_output_flag
+            [],  # run_tests_flag
+            None,  # test_file_names
+            None,  # record_test_output_values
+            False,  # verbose
+            None,  # instructions
+            {},  # expected_script_outputs
+            {},  # expected_test_outputs
+            ValueError  # expected_exception
+        ),
+        # Test case 7: Invalid directory paths
+        # - Tests the scenario where directory paths contain invalid paths (empty strings), expecting a ValueError.
+        (
+            ["", ""],  # directory_paths
+            [["file1.py"], ["file3.py"]],  # files_by_directory
+            [True, True],  # record_output_flag
+            [False, False],  # run_tests_flag
+            None,  # test_file_names
+            None,  # record_test_output_values
+            False,  # verbose
+            None,  # instructions
+            {},  # expected_script_outputs
+            {},  # expected_test_outputs
+            ValueError  # expected_exception
+        ),
+        # Test case 8: Non-boolean record_output_flag
+        # - Tests the scenario where record_output_flag contains a non-boolean value, expecting a ValueError.
+        (
+            ["dir1", "dir2"],  # directory_paths
+            [["file1.py"], ["file3.py"]],  # files_by_directory
+            [True, "False"],  # record_output_flag
+            [False, False],  # run_tests_flag
+            None,  # test_file_names
+            None,  # record_test_output_values
+            False,  # verbose
+            None,  # instructions
+            {},  # expected_script_outputs
+            {},  # expected_test_outputs
+            ValueError  # expected_exception
+        ),
+        # Test case 9: Mismatch in files_by_directory and record_output_flag lengths
+        # - Tests the scenario where the lengths of files_by_directory and record_output_flag do not match, expecting a ValueError.
+        (
+            ["dir1", "dir2"],  # directory_paths
+            [["file1.py"], ["file3.py"]],  # files_by_directory
+            [True],  # record_output_flag
+            [False, False],  # run_tests_flag
+            None,  # test_file_names
+            None,  # record_test_output_values
+            False,  # verbose
+            None,  # instructions
+            {},  # expected_script_outputs
+            {},  # expected_test_outputs
+            ValueError  # expected_exception
+        ),
+        # Test case 10: Mismatch in test_file_names, run_tests_flag, and record_test_output_values lengths
+        # - Tests the scenario where the lengths of test_file_names, run_tests_flag, and record_test_output_values do not match, expecting a ValueError.
+        (
+            ["dir1", "dir2"],  # directory_paths
+            [["file1.py"], ["file3.py"]],  # files_by_directory
+            [True, True],  # record_output_flag
+            [True, False],  # run_tests_flag
+            [["test_file1.py"], ["test_file3.py"]],  # test_file_names
+            [True],  # record_test_output_values
+            False,  # verbose
+            None,  # instructions
+            {},  # expected_script_outputs
+            {},  # expected_test_outputs
+            ValueError  # expected_exception
+        ),
+        # Test case 11: Invalid list structure or lengths
+        # - Tests the scenario where the structure or lengths of the input lists are invalid, expecting a ValueError.
+        (
+            ["dir1"],  # directory_paths
+            ["file1.py"],  # files_by_directory
+            [True],  # record_output_flag
+            [False],  # run_tests_flag
+            [["test_file1.py"]],  # test_file_names
+            [False],  # record_test_output_values
+            False,  # verbose
+            None,  # instructions
+            {},  # expected_script_outputs
+            {},  # expected_test_outputs
+            ValueError  # expected_exception
+        ),
+        # Test case 12: Nested empty lists
+        # - Tests the scenario where files_by_directory or test_file_names contain nested empty lists, expecting a ValueError.
+        (
+            ["dir1"],  # directory_paths
+            [[]],  # files_by_directory
+            [True],  # record_output_flag
+            [False],  # run_tests_flag
+            [[]],  # test_file_names
+            [False],  # record_test_output_values
+            False,  # verbose
+            None,  # instructions
+            {},  # expected_script_outputs
+            {},  # expected_test_outputs
+            ValueError  # expected_exception
         )
+    ]
+)
+def test_execute(directory_paths, files_by_directory, model, record_output_flag, run_tests_flag, test_file_names, record_test_output_values, verbose, instructions, expected_script_outputs, expected_test_outputs, expected_exception, temp_directory):
+    """
+    Test function for the execute function.
 
-@pytest.mark.parametrize("directory_paths, files_by_directory, test_file_names, record_output, record_test_output, run_tests, verbose, model_provided", test_data)
-def test_execute_combined(temp_directory, model, directory_paths, files_by_directory, test_file_names, record_output, record_test_output, run_tests, verbose, model_provided):
-    # Setup test directories and files
-    if "dir1" in directory_paths:  # Check if "dir1" is in the directory paths
-        directory_paths = temp_directory  # Use temporary directory if "dir1" is present
-    
-    if model_provided == "invalid_model_name":  # Check if an invalid model name is provided
-        model = Model("invalid_model_name")  # Set model to an invalid model name
-    elif model_provided:  # Check if a model is provided
-        model = model  # Use the provided model
+    This test covers various scenarios, including normal operations, edge cases, and validation checks.
+
+    Args:
+        directory_paths (List[str]): The directories to process.
+        files_by_directory (List[List[str]]): The names of the files to process for each directory.
+        model (Any): The model to use for processing.
+        record_output_flag (List[bool]): Flags indicating whether to record the script output for each directory.
+        run_tests_flag (List[bool]): Flags indicating whether to run the test files for each directory.
+        test_file_names (List[List[str]], optional): The names of the test files to run for each directory. Defaults to None.
+        record_test_output_values (List[bool], optional): Flags indicating whether to record the test output for each directory. Defaults to None.
+        verbose (bool): Whether to print the outputs to the console.
+        instructions (List[str]): The list of instructions to run on the files.
+        expected_script_outputs (Dict[str, Any]): Expected script outputs.
+        expected_test_outputs (Dict[str, Any]): Expected test outputs.
+        expected_exception (Optional[Exception]): Expected exception.
+        temp_directory (Fixture): Fixture for the temporary directory structure.
+    """
+    # Resolve the first directory path to its absolute form and convert it to a string
+    # Path(temp_directory["directory_paths"][0]).resolve() converts the first relative directory path from the fixture to an absolute path
+    # str(...) converts the absolute path object to a string
+    directory_path_1 = str(Path(temp_directory["directory_paths"][0]).resolve())
+
+    # Resolve the second directory path to its absolute form and convert it to a string
+    directory_path_2 = str(Path(temp_directory["directory_paths"][1]).resolve())
+
+    # Create a list of the absolute directory paths as strings
+    directory_paths = [directory_path_1, directory_path_2]
+
+    # Retrieve the list of files for each directory from the fixture
+    # This contains lists of file names for each directory
+    files_by_directory = temp_directory["files_by_directory"]
+
+    # Retrieve the list of test file names for each directory from the fixture
+    # This contains lists of test file names for each directory
+    test_file_names = temp_directory["test_file_names"]
+
+    # Introduce a delay of one second between each parameterized test case to avoid API rate limit issues
+    time.sleep(1)
+
+    if expected_exception:
+        # If an exception is expected, check that the correct exception is raised
+        with pytest.raises(expected_exception):
+            execute(directory_paths, files_by_directory, model, record_output_flag, run_tests_flag, test_file_names, record_test_output_values, verbose, instructions)
     else:
-        model = None  # Set model to None if no model is provided
-    
-    # Call the generate_and_count_lists function which overwrites the record_output, record_test_output, and run_tests lists
-    record_output, record_test_output, run_tests = generate_and_count_lists(
-        files_by_directory, test_file_names, record_output, record_test_output, run_tests
-    )
-
-    # Execute the function with the provided parameters
-    if directory_paths == ["invalid_dir"]:  # Check if the directory paths are invalid
-        execute_with_exception_handling(directory_paths, files_by_directory, test_file_names, record_output, record_test_output, run_tests, verbose, model, instructions, Exception)
-    elif files_by_directory == [['invalid_file.py'], ['invalid_script.py']]:  # Check if the files are invalid
-        execute_with_exception_handling(directory_paths, files_by_directory, test_file_names, record_output, record_test_output, run_tests, verbose, model, instructions, Exception)
-    elif validate_lengths(files_by_directory, run_tests_values, record_test_output) and validate_lengths(files_by_directory, record_output_values):  # Check if the lengths of the lists do not match
-        execute_with_exception_handling(directory_paths, files_by_directory, test_file_names, record_output, record_test_output, run_tests, verbose, model, instructions, ValueError)
-    elif is_nested_empty_list(files_by_directory) and is_nested_empty_list(test_file_names):  # Check if both files and test file lists are empty
-        execute_with_exception_handling(directory_paths, files_by_directory, test_file_names, record_output, record_test_output, run_tests, verbose, model, instructions, Exception)
-    elif not model_provided:  # Check if the model is not provided
-        execute_with_exception_handling(directory_paths, files_by_directory, test_file_names, record_output, record_test_output, run_tests, verbose, model, instructions, ValueError)
-    elif model_provided == "invalid_model_name":  # Check if the model provided is invalid
-        execute_with_exception_handling(directory_paths, files_by_directory, test_file_names, record_output, record_test_output, run_tests, verbose, model, instructions, Exception)
-    elif files_by_directory == [['math_functions.py', ['test.py']], ['another_script.py']]:  # Check if the nested list structure is invalid
-        execute_with_exception_handling(directory_paths, files_by_directory, test_file_names, record_output, record_test_output, run_tests, verbose, model, instructions, Exception)
-    else:  # For valid inputs
-        script_outputs, test_outputs = execute(
-            directory_paths=directory_paths,
-            files_by_directory=files_by_directory,
-            record_output=record_output,
-            record_test_output=record_test_output,
-            run_tests=run_tests,
-            test_file_names=test_file_names,
-            verbose=verbose,
-            model=model,
-        )
-        assert isinstance(script_outputs, dict)  # Assert that script outputs are a dictionary
-        assert isinstance(test_outputs, dict)  # Assert that test outputs are a dictionary
+        # Run the execute function and capture the outputs
+        script_outputs, test_outputs = execute(directory_paths, files_by_directory, model, record_output_flag, run_tests_flag, test_file_names, record_test_output_values, verbose, instructions)
+        
+        # Assert that the captured script outputs match the expected script outputs
+        assert script_outputs == expected_script_outputs
+        
+        # Assert that the captured test outputs match the expected test outputs
+        assert test_outputs == expected_test_outputs
 
 # Run the tests
 if __name__ == "__main__":

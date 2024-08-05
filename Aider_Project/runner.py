@@ -2,19 +2,19 @@ import subprocess
 from typing import Dict, Optional, Tuple
 
 def run_script_and_record_output(script_path: Optional[str] = None, 
-                                 record_output: bool = True, 
+                                 record_output: bool = False, 
                                  test_file_path: Optional[str] = None,
-                                 record_test_output: bool = True,
-                                 run_tests_values: bool = True) -> Tuple[Dict[str, str], Dict[str, Dict[str, str]]]:
+                                 record_test_output: bool = False,
+                                 run_tests_values: bool = False) -> Tuple[Dict[str, str], Dict[str, Dict[str, str]]]:
     """
     Run a script and optionally record the output. Optionally, run a test file and record its output.
 
     Args:
         script_path (str, optional): The path to the script to run. Defaults to None.
-        record_output (bool): Whether to record the script output. Defaults to True.
+        record_output (bool): Whether to record the script output. Defaults to False.
         test_file_path (str, optional): The path to the test file to run. Defaults to None.
-        record_test_output (bool): Whether to record the test file output. Defaults to True.
-        run_tests_values (bool): Whether to run the test file. Defaults to True.
+        record_test_output (bool): Whether to record the test file output. Defaults to False.
+        run_tests_values (bool): Whether to run the test file. Defaults to False.
 
     Returns:
         Tuple[Dict[str, str], Dict[str, Dict[str, str]]]: A tuple containing dictionaries of script and test outputs.

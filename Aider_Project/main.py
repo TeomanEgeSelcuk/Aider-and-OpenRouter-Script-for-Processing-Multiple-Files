@@ -6,7 +6,7 @@ from aider.io import InputOutput
 import os
 from Aider_Project.utils import get_openrouter_api_key, list_files
 from Aider_Project.runner import run_script_and_record_output 
-from Aider_Project.execute_helper import is_nested_empty_list, validate_lengths, check_nested_lists_and_flat_list, generate_and_count_lists
+from Aider_Project.execute_helper import is_nested_empty_list, validate_lengths, check_nested_lists_and_flat_list, generate_and_count_lists, organize_flags
 
 '''
 main.py: Contains the execute function and the entry point.
@@ -158,84 +158,118 @@ def execute(directory_paths: List[str],
         ({'dir1-file1.py': {'stdout': 'Output from file1.py', 'stderr': ''}, 'dir1-file2.py': {'stdout': '', 'stderr': ''}, 'dir2-file3.py': {'stdout': '', 'stderr': ''}}, {'dir1-test_file1.py': {'stdout': 'Output from test_file1.py', 'stderr': ''}, 'dir1-test_file2.py': {'stdout': 'Output from test_file2.py', 'stderr': ''}})
     """
     try:
+        # Check that directory_paths is not empty and contains valid paths
+        if not directory_paths or not all(directory_paths):
+            # This check ensures that the directory_paths list is not empty and that each path in the list is valid (i.e., not an empty string).
+            raise ValueError("directory_paths cannot be empty and must contain valid paths")
+
+        # Ensure record_output_flag contains only boolean values
+        if not all(isinstance(flag, bool) for flag in record_output_flag):
+            raise ValueError("record_output_flag must contain boolean values")
+
         # If test_file_names is None, set run_tests_flag and record_test_output_values to lists of False
         if test_file_names is None:
-            # If no test file names are provided
-            run_tests_flag = [False] * len(directory_paths)  # Set run_tests_flag to False for all directories
-            record_test_output_values = [False] * len(directory_paths)  # Set record_test_output_values to False for all directories
+            # If no test file names are provided, this means that the user does not want to run any tests
+            run_tests_flag = [False] * len(directory_paths)  # Initialize run_tests_flag to False for all directories
+            record_test_output_values = [False] * len(directory_paths)  # Initialize record_test_output_values to False for all directories
 
         # Validate input lengths for files_by_directory and record_output_flag
         if validate_lengths(files_by_directory, record_output_flag):
+            # If the lengths of files_by_directory and record_output_flag do not match, raise an error
             raise ValueError("Mismatch in the lengths of files_by_directory and record_output_flag")
+            # This ensures that each directory has a corresponding flag to indicate whether to record its output
 
         # Validate the test file names and record test output values lengths if run_tests_flag and test_file_names are provided
         if run_tests_flag is not None and test_file_names is not None:
+            # Ensure run_tests_flag and record_test_output_values contain only boolean values
+            if not all(isinstance(flag, bool) for flag in run_tests_flag):
+                raise ValueError("run_tests_flag must contain boolean values")
+            if not all(isinstance(flag, bool) for flag in record_test_output_values):
+                raise ValueError("record_test_output_values must contain boolean values")
+
+            # If both run_tests_flag and test_file_names are provided
             if validate_lengths(test_file_names, run_tests_flag, record_test_output_values):
+                # Validate that the lengths of test_file_names, run_tests_flag, and record_test_output_values match
                 raise ValueError("Mismatch in the lengths of test_file_names, run_tests_flag, or record_test_output_values")
+                # This ensures that each test file has corresponding flags to indicate whether to run the tests and record their outputs
 
         # Check for valid nested lists and flat list structure
         if not check_nested_lists_and_flat_list(files_by_directory, test_file_names, directory_paths):
+            # Ensure that the structure of files_by_directory and test_file_names matches the structure of directory_paths
             raise ValueError("Invalid list structure or lengths between nested lists and directory_paths")
+            # This ensures that each directory has a corresponding list of files and test files with the correct structure
 
         # Ensure files_by_directory and test_file_names are not nested empty lists
         if is_nested_empty_list(files_by_directory) or (test_file_names is not None and is_nested_empty_list(test_file_names)):
+            # Check if files_by_directory or test_file_names contain nested empty lists
             raise ValueError("Files by directory list or test file names list is a nested empty list")
-        
+            # This ensures that there are no empty lists within the nested structure, which would indicate missing data
+
         # Initialize dictionaries to store outputs
         script_outputs: Dict[str, Any] = {}
         test_outputs: Dict[str, Any] = {}
 
-        # Process each directory and its corresponding files
-        for dir_index, directory in enumerate(directory_paths):
-            # List files in the directory
-            list_files(directory)
+        # Call organize_flags to get the organized flags based on the input structure
+        organized_flags = organize_flags(directory_paths, files_by_directory, record_output_flag, run_tests_flag, record_test_output_values, test_file_names)
 
-            # Process the directory using the separate function only if instructions are provided
-            if dir_index < len(instructions) and instructions[dir_index]:
-                aider_runner(directory, files_by_directory[dir_index], model, instructions[dir_index])
+      # Iterate over each directory in the directory paths
+        for i, directory in enumerate(directory_paths):
 
-            # # Determine if we should run tests and record test output
-            # run_tests = run_tests_flag[dir_index]
-            # record_test_output = record_test_output_values[dir_index]
-            # test_files = test_file_names[dir_index]
+            # Check if files_by_directory[i] is not empty
+            if files_by_directory[i]:
+                # Ensure that i is within the bounds of the instructions list
+                if i < len(instructions) and instructions[i]:
+                    # Run the aider_runner function
+                    aider_runner(directory, files_by_directory[i], model, instructions[i])
 
-            file_index = 0
-            for file_name in files_by_directory[dir_index]:
-                # Determine the current file's record_output_flag and run_tests_flag based on the file index
-                current_record_output_flag = record_output_flag[dir_index]
-                # Ensure run_tests_flag and record_test_output_values are applied to test files only
-                if file_name in test_file_names[dir_index]:
-                    current_run_tests_flag = run_tests_flag[dir_index]
-                    current_record_test_output_values = record_test_output_values[dir_index]
-                else:
-                    current_run_tests_flag = False
-                    current_record_test_output_values = False
+            # Determine if any of the flags are True for the current directory
+            # This check is necessary to decide if we need to run the scripts or test files
+            record_output_flags = organized_flags['record_output_flag'][i]
+            run_tests_flags = organized_flags['run_tests_flag'][i]
+            record_test_output_values = organized_flags['record_test_output_values'][i]
 
-                script_output, individual_test_outputs = run_script_and_record_output(
-                    script_path=str(Path(directory) / file_name),  # Construct the full script path
-                    record_output=current_record_output_flag,  # Determine if the script's output should be recorded
-                    test_file_paths=[str(Path(directory) / test_file_name) for test_file_name in test_file_names[dir_index]] if current_run_tests_flag else None,  # List of test file paths, if applicable
-                    record_test_output=current_record_test_output_values,  # Determine if test outputs should be recorded
-                    run_tests_values=current_run_tests_flag  # Determine if tests should be run
-                )
-                # If recording the script's output is enabled
-                if current_record_output_flag:
-                    script_outputs[f"{directory}-{file_name}"] = script_output  # Store the script's output with directory context
-                    # Print the script's output to the console if verbose is True
-                    if verbose:
-                        print(f"Script Output for '{file_name}' in '{directory}':\nSTDOUT:\n{script_output['stdout']}\nSTDERR:\n{script_output['stderr']}")
-                # If running tests and test file names are provided
-                if current_run_tests_flag and test_file_names[dir_index]:
-                    for test_file_name, test_output in individual_test_outputs.items():
-                        test_outputs[f"{file_name}-{test_file_name}"] = test_output  # Store the test's output with script context
-                        # Print the test's output to the console if verbose is True
+            # If at least one flag is True, invoke run_script_and_record_output
+            if any(record_output_flags) or any(run_tests_flags) or any(record_test_output_values):
+                # Iterate over each file and its corresponding record_output_flag
+                for file, record_output_flag in zip(files_by_directory[i], record_output_flags):
+                    # Construct the absolute path for the script
+                    script_path = str(Path(directory) / file)
+                    # Run script and record its output if record_output_flag is True
+                    if record_output_flag:
                         if verbose:
-                            print(f"Test Output for '{test_file_name}' in '{file_name}':\nSTDOUT:\n{test_output['stdout']}\nSTDERR:\n{test_output['stderr']}")
+                            # Print the action being performed if verbose is True
+                            print(f"Running script: {script_path} with record_output_flag: {record_output_flag}")
+                        # Call the function to run the script and record its output
+                        script_output, _ = run_script_and_record_output(script_path=script_path, record_output=record_output_flag)
+                        # Store the script output in the dictionary using the file name as the key
+                        script_outputs[script_path] = script_output
+                        if verbose:
+                            # Print the script output if verbose is True
+                            print(f"Script Output for {script_path}:\n{script_output}")
 
-                file_index += 1  # Move to the next file index
+                # Iterate over each test file and its corresponding flags
+                for test_file, run_tests_flag, record_test_output_flag in zip(test_file_names[i], run_tests_flags, record_test_output_values):
+                    # Construct the absolute path for the test file
+                    test_file_path = str(Path(directory) / test_file)
+                    # Run tests and record their output if run_tests_flag or record_test_output_flag is True
+                    if run_tests_flag or record_test_output_flag:
+                        if verbose:
+                            # Print the action being performed if verbose is True
+                            print(f"Running test file: {test_file_path} with run_tests_flag: {run_tests_flag} and record_test_output_flag: {record_test_output_flag}")
+                        # Call the function to run the test file and record its output
+                        _, test_output = run_script_and_record_output(test_file_path=test_file_path, record_test_output=record_test_output_flag, run_tests_values=run_tests_flag)
+                        # Store the test output in the dictionary using the test file name as the key
+                        test_outputs[test_file_path] = test_output
+                        if verbose:
+                            # Print the test output if verbose is True
+                            print(f"Test Output for {test_file_path}:\n{test_output}")
 
-        # Optional: Process or return the collected outputs
-        return script_outputs, test_outputs
+
+        # Return the dictionaries containing the script and test outputs
+        return {
+            "script_outputs": script_outputs,
+            "test_outputs": test_outputs
+        }
 
     except Exception as e:
         if verbose:
@@ -243,7 +277,7 @@ def execute(directory_paths: List[str],
         raise  # Re-raise the exception after logging it if verbose
     
 # Example usage
-if __name__ == "__main__":
+# if __name__ == "__main__":
 
     # # Replace with the absolute paths of the directories you want to process
     # # Pass the file names as a list of lists corresponding to each directory
@@ -270,127 +304,127 @@ if __name__ == "__main__":
     #                                        model=model,
     #                                        instructions=instructions)
 
-    import time 
+    # import time 
 
-    def clear_files(file_paths: List[str]) -> None:
-        """
-        Clears the contents of the specified files.
+    # def clear_files(file_paths: List[str]) -> None:
+    #     """
+    #     Clears the contents of the specified files.
         
-        Args:
-            file_paths (List[str]): A list of file paths to clear.
-        """
-        for file_path in file_paths:
-            with open(file_path, 'w') as file:
-                file.write("")
+    #     Args:
+    #         file_paths (List[str]): A list of file paths to clear.
+    #     """
+    #     for file_path in file_paths:
+    #         with open(file_path, 'w') as file:
+    #             file.write("")
 
-    # Assuming `Model` and `execute` are defined elsewhere in your codebase
-    model = Model("openrouter/deepseek/deepseek-coder")
+    # # Assuming `Model` and `execute` are defined elsewhere in your codebase
+    # model = Model("openrouter/deepseek/deepseek-coder")
 
-    # Example 1: Basic usage without tests
-    print("Example 1 Output:")
-    clear_files([r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest\file1.py', 
-                r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest\file2.py'])
-    print(execute(directory_paths=[r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest', 
-                                r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest-2'],
-                files_by_directory=[["file1.py", "file2.py"], ["file3.py"]],
-                model=model,
-                record_output_flag=[True, True, False],
-                run_tests_flag=[False, False],
-                test_file_names=[["test_file1.py"], ["test_file3.py"]],
-                record_test_output_values=[False, False],
-                verbose=True,
-                instructions=[
-                    [
-                        "in file1.py: add a function to print 'Hello World'. Add a way to run this module with the func.",
-                        "in file2.py: add a function to print 'Test File 2. Add a way to run this module with the func.'"
-                    ]
-                ]))
+    # # Example 1: Basic usage without tests
+    # print("Example 1 Output:")
+    # clear_files([r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest\file1.py', 
+    #             r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest\file2.py'])
+    # print(execute(directory_paths=[r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest', 
+    #                             r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest-2'],
+    #             files_by_directory=[["file1.py", "file2.py"], ["file3.py"]],
+    #             model=model,
+    #             record_output_flag=[True, True, False],
+    #             run_tests_flag=[False, False],
+    #             test_file_names=[["test_file1.py"], ["test_file3.py"]],
+    #             record_test_output_values=[False, False],
+    #             verbose=True,
+    #             instructions=[
+    #                 [
+    #                     "in file1.py: add a function to print 'Hello World'. Add a way to run this module with the func.",
+    #                     "in file2.py: add a function to print 'Test File 2. Add a way to run this module with the func.'"
+    #                 ]
+    #             ]))
 
-    print('sleeping')
-    # Wait for 1 second
-    time.sleep(1)
-    os._exit(0)
+    # print('sleeping')
+    # # Wait for 1 second
+    # time.sleep(1)
+    # # os._exit(0)
 
-    # Example 2: Running scripts and tests with output recording
-    print("Example 2 Output:")
-    clear_files([r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest\file1.py', 
-                r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest\file3.py',
-                r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest-2\test_file1.py',
-                r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest-2\test_file3.py'])
-    print(execute(directory_paths=[r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest', 
-                                r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest-2'],
-                files_by_directory=[["file1.py", "file3.py"], ["test_file1.py", "test_file3.py"]],
-                model=model,
-                record_output_flag=[True, True],
-                run_tests_flag=[True, True],
-                test_file_names=[[], ["test_file1.py", "test_file3.py"]],
-                record_test_output_values=[True, True],
-                verbose=True,
-                instructions=[
-                    [
-                    "in file1.py: add a function called 'test' to print 'Running tests'. Add a way to run this module with the func.",
-                    "in file3.py: add a function called 'test_two' to print 'Running tests on file 3'. Add a way to run this module with the func"
-                    ],
-                    [
-                    "in test_file1.py: add a pytest function to test ../codetest/file1.py which is called 'test' and prints 'Running tests",
-                    "in test_file3.py: add a pytest function to test ../codetest/file3.py which is called 'test_two' and prints 'Running tests on file 3'"
-                    ]
-                ]))
+    # # Example 2: Running scripts and tests with output recording
+    # print("Example 2 Output:")
+    # clear_files([r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest\file1.py', 
+    #             r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest\file3.py',
+    #             r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest-2\test_file1.py',
+    #             r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest-2\test_file3.py'])
+    # print(execute(directory_paths=[r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest', 
+    #                             r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest-2'],
+    #             files_by_directory=[["file1.py", "file3.py"], ["test_file1.py", "test_file3.py"]],
+    #             model=model,
+    #             record_output_flag=[True, True, False, False],
+    #             run_tests_flag=[True, True],
+    #             test_file_names=[[], ["test_file1.py", "test_file3.py"]],
+    #             record_test_output_values=[True, True],
+    #             verbose=True,
+    #             instructions=[
+    #                 [
+    #                 "in file1.py: add a function called 'test' to print 'Running tests'. Add a way to run this module with the func.",
+    #                 "in file3.py: add a function called 'test_two' to print 'Running tests on file 3'. Add a way to run this module with the func"
+    #                 ],
+    #                 [
+    #                 "in test_file1.py: add a pytest function to test ../codetest/file1.py which is called 'test' and prints 'Running tests",
+    #                 "in test_file3.py: add a pytest function to test ../codetest/file3.py which is called 'test_two' and prints 'Running tests on file 3'"
+    #                 ]
+    #             ]))
 
-    # Wait for 1 second
-    time.sleep(1)
+    # # Wait for 1 second
+    # time.sleep(1)
 
-    # Example 3: Running scripts without recording their output
-    print("Example 3 Output:")
-    clear_files([r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest\file1.py'])
-    print(execute(directory_paths=[r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest'],
-                files_by_directory=[["file1.py"]],
-                model=model,
-                record_output_flag=[False],
-                run_tests_flag=[False],
-                test_file_names=[[]],
-                record_test_output_values=[False],
-                verbose=True,
-                instructions=[["in file1.py: add a function to print 'No output recording'"]]))
+    # # Example 3: Running scripts without recording their output
+    # print("Example 3 Output:")
+    # clear_files([r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest\file1.py'])
+    # print(execute(directory_paths=[r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest'],
+    #             files_by_directory=[["file1.py"]],
+    #             model=model,
+    #             record_output_flag=[False],
+    #             run_tests_flag=[False],
+    #             test_file_names=[[]],
+    #             record_test_output_values=[False],
+    #             verbose=True,
+    #             instructions=[["in file1.py: add a function to print 'No output recording'"]]))
 
-    # Wait for 1 second
-    time.sleep(1)
+    # # Wait for 1 second
+    # time.sleep(1)
 
-    # Example 4: Complex case with mixed settings
-    print("Example 4 Output:")
-    clear_files([r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest\file1.py', 
-                r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest\file2.py', 
-                r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest-extra\file4.py',
-                r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest-2\test_file4.py'])
-    print(execute(directory_paths=[r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest', 
-                                r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest-extra',
-                                r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest-2'],
-                files_by_directory=[["file1.py", "file2.py"], ["file4.py"], ["test_file4.py"]],
-                model=model,
-                record_output_flag=[True, False, True, False],
-                run_tests_flag=[False, True],
-                test_file_names=[[], [], ["test_file3.py", "test_file4.py"]],
-                record_test_output_values=[False, True],
-                verbose=True,
-                instructions=[
-                    ["in file2.py: add a function named complex_two to print 'Complex case example 2'"],
-                    ["in file4.py: add a function named complex_four to print 'Complex case example 4'. Add a way to run this module with the func"],
-                    ["in test_file4.py: add a pytest function to test ../codetest-extra/file4.py' which prints 'Complex case example 4'"]
-                ]))
+    # # Example 4: Complex case with mixed settings
+    # print("Example 4 Output:")
+    # clear_files([r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest\file1.py', 
+    #             r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest\file2.py', 
+    #             r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest-extra\file4.py',
+    #             r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest-2\test_file4.py'])
+    # print(execute(directory_paths=[r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest', 
+    #                             r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest-extra',
+    #                             r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest-2'],
+    #             files_by_directory=[["file1.py", "file2.py"], ["file4.py"], ["test_file4.py"]],
+    #             model=model,
+    #             record_output_flag=[True, False, True, False],
+    #             run_tests_flag=[False, True],
+    #             test_file_names=[[], [], ["test_file3.py", "test_file4.py"]],
+    #             record_test_output_values=[False, True],
+    #             verbose=True,
+    #             instructions=[
+    #                 ["in file2.py: add a function named complex_two to print 'Complex case example 2'"],
+    #                 ["in file4.py: add a function named complex_four to print 'Complex case example 4'. Add a way to run this module with the func"],
+    #                 ["in test_file4.py: add a pytest function to test ../codetest-extra/file4.py' which prints 'Complex case example 4'"]
+    #             ]))
 
-    # Wait for 1 second
-    time.sleep(1)
+    # # Wait for 1 second
+    # time.sleep(1)
 
-    # Example 5: Running scripts with optional test parameters not given
-    print("Example 5 Output:")
-    clear_files([r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest\file1.py', 
-                r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest\file2.py'])
-    print(execute(directory_paths=[r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest'],
-                files_by_directory=[["file1.py", "file2.py"]],
-                model=model,
-                record_output_flag=[False, True],
-                verbose=True,
-                instructions=[
-                    "in file1.py: add a function to print 'No tests'. Add a way to run this module with the func",
-                    "in file2.py: add a function to print 'No tests'. Add a way to run this module with the func"
-                ]))
+    # # Example 5: Running scripts with optional test parameters not given
+    # print("Example 5 Output:")
+    # clear_files([r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest\file1.py', 
+    #             r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest\file2.py'])
+    # print(execute(directory_paths=[r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest'],
+    #             files_by_directory=[["file1.py", "file2.py"]],
+    #             model=model,
+    #             record_output_flag=[False, True],
+    #             verbose=True,
+    #             instructions=[
+    #                 "in file1.py: add a function to print 'No tests'. Add a way to run this module with the func",
+    #                 "in file2.py: add a function to print 'No tests'. Add a way to run this module with the func"
+    #             ]))
