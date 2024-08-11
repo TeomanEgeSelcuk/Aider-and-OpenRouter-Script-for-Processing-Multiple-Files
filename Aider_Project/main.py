@@ -1,12 +1,14 @@
 from pathlib import Path
 from typing import  List, Optional, Dict, Any, Tuple, Union
 from aider.coders import Coder
-from aider.models import Model
+# from aider.models import Model
 from aider.io import InputOutput
 import os
-from Aider_Project.utils import get_openrouter_api_key, list_files
+
+# Modules within this project 
+# from Aider_Project.utils import get_openrouter_api_key, list_files
 from Aider_Project.runner import run_script_and_record_output 
-from Aider_Project.execute_helper import is_nested_empty_list, validate_lengths, check_nested_lists_and_flat_list, generate_and_count_lists, organize_flags
+from Aider_Project.execute_helper import is_nested_empty_list, validate_lengths, check_nested_lists_and_flat_list, organize_flags, get_flag_value
 
 '''
 main.py: Contains the execute function and the entry point.
@@ -167,12 +169,6 @@ def execute(directory_paths: List[str],
         if not all(isinstance(flag, bool) for flag in record_output_flag):
             raise ValueError("record_output_flag must contain boolean values")
 
-        # If test_file_names is None, set run_tests_flag and record_test_output_values to lists of False
-        if test_file_names is None:
-            # If no test file names are provided, this means that the user does not want to run any tests
-            run_tests_flag = [False] * len(directory_paths)  # Initialize run_tests_flag to False for all directories
-            record_test_output_values = [False] * len(directory_paths)  # Initialize record_test_output_values to False for all directories
-
         # Validate input lengths for files_by_directory and record_output_flag
         if validate_lengths(files_by_directory, record_output_flag):
             # If the lengths of files_by_directory and record_output_flag do not match, raise an error
@@ -210,59 +206,67 @@ def execute(directory_paths: List[str],
         test_outputs: Dict[str, Any] = {}
 
         # Call organize_flags to get the organized flags based on the input structure
-        organized_flags = organize_flags(directory_paths, files_by_directory, record_output_flag, run_tests_flag, record_test_output_values, test_file_names)
+        organized_flags = organize_flags(directory_paths=directory_paths, 
+                                        files_by_directory=files_by_directory, 
+                                        record_output_flag=record_output_flag, 
+                                        run_tests_flag=run_tests_flag, 
+                                        record_test_output_values=record_test_output_values, 
+                                        test_file_names=test_file_names)
 
       # Iterate over each directory in the directory paths
         for i, directory in enumerate(directory_paths):
 
-            # Check if files_by_directory[i] is not empty
-            if files_by_directory[i]:
-                # Ensure that i is within the bounds of the instructions list
+            #  Ensure that i is within the bounds of the files_by_directory list and check if files_by_directory[i] is not empty
+            if i < len(files_by_directory) and files_by_directory[i]:
+                # Ensure that i is within the bounds of the instructions list and instructions list is not empty 
                 if i < len(instructions) and instructions[i]:
                     # Run the aider_runner function
                     aider_runner(directory, files_by_directory[i], model, instructions[i])
 
             # Determine if any of the flags are True for the current directory
             # This check is necessary to decide if we need to run the scripts or test files
-            record_output_flags = organized_flags['record_output_flag'][i]
-            run_tests_flags = organized_flags['run_tests_flag'][i]
-            record_test_output_values = organized_flags['record_test_output_values'][i]
+            record_output_flags = get_flag_value(organized_flags.get('record_output_flag', []), i, [False])
+            run_tests_flags = get_flag_value(organized_flags.get('run_tests_flag', []), i, [False])
+            record_test_output_values = get_flag_value(organized_flags.get('record_test_output_values', []), i, [False])
 
             # If at least one flag is True, invoke run_script_and_record_output
             if any(record_output_flags) or any(run_tests_flags) or any(record_test_output_values):
-                # Iterate over each file and its corresponding record_output_flag
-                for file, record_output_flag in zip(files_by_directory[i], record_output_flags):
-                    # Construct the absolute path for the script
-                    script_path = str(Path(directory) / file)
-                    # Run script and record its output if record_output_flag is True
-                    if record_output_flag:
-                        if verbose:
-                            # Print the action being performed if verbose is True
-                            print(f"Running script: {script_path} with record_output_flag: {record_output_flag}")
-                        # Call the function to run the script and record its output
-                        script_output, _ = run_script_and_record_output(script_path=script_path, record_output=record_output_flag)
-                        # Store the script output in the dictionary using the file name as the key
-                        script_outputs[script_path] = script_output
-                        if verbose:
-                            # Print the script output if verbose is True
-                            print(f"Script Output for {script_path}:\n{script_output}")
+                # Check if files_by_directory exists and i is within bounds, and the specific files_by_directory[i] is not None or empty
+                if files_by_directory and i < len(files_by_directory) and files_by_directory[i]:
+                    for file, record_output_flag in zip(files_by_directory[i], record_output_flags):
+                        # Construct the absolute path for the script
+                        script_path = str(Path(directory) / file)
+                        # Run script and record its output if record_output_flag is True
+                        if record_output_flag:
+                            if verbose:
+                                # Print the action being performed if verbose is True
+                                print(f"Running script: {script_path} with record_output_flag: {record_output_flag}")
+                            # Call the function to run the script and record its output
+                            script_output, _ = run_script_and_record_output(script_path=script_path, record_output=record_output_flag)
+                            # Store the script output in the dictionary using the file name as the key
+                            script_outputs[script_path] = script_output
+                            if verbose:
+                                # Print the script output if verbose is True
+                                print(f"Script Output for {script_path}:\n{script_output}")
 
                 # Iterate over each test file and its corresponding flags
-                for test_file, run_tests_flag, record_test_output_flag in zip(test_file_names[i], run_tests_flags, record_test_output_values):
-                    # Construct the absolute path for the test file
-                    test_file_path = str(Path(directory) / test_file)
-                    # Run tests and record their output if run_tests_flag or record_test_output_flag is True
-                    if run_tests_flag or record_test_output_flag:
-                        if verbose:
-                            # Print the action being performed if verbose is True
-                            print(f"Running test file: {test_file_path} with run_tests_flag: {run_tests_flag} and record_test_output_flag: {record_test_output_flag}")
-                        # Call the function to run the test file and record its output
-                        _, test_output = run_script_and_record_output(test_file_path=test_file_path, record_test_output=record_test_output_flag, run_tests_values=run_tests_flag)
-                        # Store the test output in the dictionary using the test file name as the key
-                        test_outputs[test_file_path] = test_output
-                        if verbose:
-                            # Print the test output if verbose is True
-                            print(f"Test Output for {test_file_path}:\n{test_output}")
+                # Check if test_file_names exists and i is within bounds, and the specific test_file_names[i] is not None or empty
+                if test_file_names and i < len(test_file_names) and test_file_names[i]:
+                    for test_file, run_tests_flag, record_test_output_flag in zip(test_file_names[i], run_tests_flags, record_test_output_values):
+                        # Construct the absolute path for the test file
+                        test_file_path = str(Path(directory) / test_file)
+                        # Run tests and record their output if run_tests_flag or record_test_output_flag is True
+                        if run_tests_flag or record_test_output_flag:
+                            if verbose:
+                                # Print the action being performed if verbose is True
+                                print(f"Running test file: {test_file_path} with run_tests_flag: {run_tests_flag} and record_test_output_flag: {record_test_output_flag}")
+                            # Call the function to run the test file and record its output
+                            _, test_output = run_script_and_record_output(test_file_path=test_file_path, record_test_output=record_test_output_flag, run_tests_values=run_tests_flag)
+                            # Store the test output in the dictionary using the test file name as the key
+                            test_outputs[test_file_path] = test_output
+                            if verbose:
+                                # Print the test output if verbose is True
+                                print(f"Test Output for {test_file_path}:\n{test_output}")
 
 
         # Return the dictionaries containing the script and test outputs

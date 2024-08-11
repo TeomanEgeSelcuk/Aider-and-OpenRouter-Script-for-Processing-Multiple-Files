@@ -68,7 +68,7 @@ def run_script_and_record_output(script_path: Optional[str] = None,
     # Initialize a dictionary to store the main script's output
     script_output = {"stdout": "", "stderr": ""}
     # Initialize a dictionary to store outputs from the test file
-    test_outputs = {}
+    test_outputs = {"stdout": "", "stderr": ""}
     
     try:
         # If script_path is not None and we want to record the script's output
@@ -89,10 +89,8 @@ def run_script_and_record_output(script_path: Optional[str] = None,
             if record_test_output:
                 # Run the test using pytest, capturing its output
                 # Store the test's standard output and error messages
-                test_outputs[test_file_path] = {
-                    "stdout": test_result.stdout,
-                    "stderr": test_result.stderr
-                }
+                test_outputs["stdout"] = test_result.stdout
+                test_outputs["stderr"] = test_result.stderr
             else:
                 # If not recording output, just run the test without capturing output
                 subprocess.run(["pytest", test_file_path], check=True)

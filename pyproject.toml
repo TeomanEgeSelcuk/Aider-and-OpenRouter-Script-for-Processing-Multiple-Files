@@ -6,7 +6,7 @@ authors = ["Teoman Selcuk <teomanege.selcuk@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = ">=3.12,<3.13" 
-aider-chat = "^0.45.1"
+aider-chat = "^0.48.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.1"
@@ -26,3 +26,4 @@ include = "Aider_Project" # Package configuration for the Aider_Project package
 # Specify additional paths to be added to sys.path
 # "Aider_Project" and "tests" directories will be included in the Python path when running pytest
 python_paths = ["Aider_Project", "tests"]
+addopts = "-v --maxfail=0"

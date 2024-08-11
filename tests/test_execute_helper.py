@@ -1,4 +1,4 @@
-from Aider_Project.execute_helper import is_nested_empty_list, validate_lengths, check_nested_lists_and_flat_list, generate_and_count_lists, organize_flags # Import helper functions
+from Aider_Project.execute_helper import is_nested_empty_list, validate_lengths, check_nested_lists_and_flat_list, generate_and_count_lists, organize_flags, get_flag_value # Import helper functions
 import pytest 
 
 # Parameterized data for is_nested_empty_list function
@@ -382,3 +382,37 @@ def test_organize_flags(directory_paths, files_by_directory, test_file_names, re
         result = organize_flags(directory_paths, files_by_directory, record_output_flag, run_tests_flag, record_test_output_values, test_file_names)
         # Assert the results match the expected values
         assert result == expected
+
+
+@pytest.mark.parametrize("flag_list, index, expected", [
+    ([True, False, None, True], 1, False),  # Index within bounds and value is not None
+    ([True, None, True], 1, [False]),       # Index within bounds but value is None
+    ([True, False, True], 3, [False]),      # Index out of bounds
+    ([], 0, [False]),                       # Empty list
+    ([True, False, True], 0, True),         # Index within bounds and value is True
+    (None, 0, [False])                      # Flag list is None
+])
+def test_get_flag_value(flag_list, index, expected):
+    """
+    Test the get_flag_value function with various scenarios to ensure it handles different cases correctly.
+
+    This test function covers the following cases:
+    1. Index within bounds and value is not None
+    2. Index within bounds but value is None
+    3. Index out of bounds
+    4. Empty list
+    5. Index within bounds and value is True
+    6. Flag list is None
+
+    Args:
+        flag_list (list): Parameterized list of flags.
+        index (int): Parameterized index to access in the flag list.
+        expected: Expected output for the given input.
+    """
+    default_value = [False]  # Default value to return if the flag list is None or index is out of bounds
+    
+    # Call the get_flag_value function with the test parameters
+    result = get_flag_value(flag_list, index, default_value)  # Execute the function with the provided arguments
+    
+    # Assert that the result matches the expected output
+    assert result == expected, f"Expected {expected}, but got {result}"  # Verify the result against the expected value

@@ -547,3 +547,21 @@ def organize_flags(directory_paths: Optional[List[str]] = None,
         "run_tests_flag": nested_run_tests_flag if run_tests_flag is not None else None,
         "record_test_output_values": nested_record_test_output_values if record_test_output_values is not None else None
     }
+
+
+def get_flag_value(flag_list, index, default_value):
+    """
+    Safely get a value from a list by index, with a default value if the index is out of bounds, the value is None,
+    or the flag_list itself is None.
+
+    Args:
+        flag_list (list or None): The list to get the value from.
+        index (int): The index to look up in the list.
+        default_value: The value to return if the index is out of bounds, the value at the index is None, or the flag_list is None.
+
+    Returns:
+        The value at the specified index if it exists and is not None, otherwise the default value.
+    """
+    if flag_list is None:
+        return default_value
+    return flag_list[index] if index < len(flag_list) and flag_list[index] is not None else default_value
