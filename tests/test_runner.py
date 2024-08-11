@@ -120,16 +120,22 @@ def test_run_script_and_record_output(
     
     # Determine the actual path for the script:
     # - If script_path is "valid", use the path of the temporary script (temp_script).
+    #   Example: "valid" -> str(temp_script)
     # - If script_path is "invalid", use a deliberately invalid path ("invalid_script_path.py").
+    #   Example: "invalid" -> "invalid_script_path.py"
     # - If script_path is None, set the path to None.
+    #   Example: None -> None
     script_file_path = str(temp_script) if script_path == "valid" else "invalid_script_path.py" if script_path == "invalid" else None
     
     # Determine the actual path for the test file:
     # - If test_file_path is "valid", use the path of the temporary test file (temp_test_file).
+    #   Example: "valid" -> str(temp_test_file)
     # - If test_file_path is "invalid", use a deliberately invalid path ("invalid_test_file_path.py").
+    #   Example: "invalid" -> "invalid_test_file_path.py"
     # - If test_file_path is None, set the path to None.
+    #   Example: None -> None
     test_file_path = str(temp_test_file) if test_file_path == "valid" else "invalid_test_file_path.py" if test_file_path == "invalid" else None
-
+    
     # Run the function and capture the outputs:
     if expected_exception:
         # If an exception is expected, use pytest.raises to assert that the expected exception is raised.
@@ -150,27 +156,32 @@ def test_run_script_and_record_output(
             record_test_output=record_test_output,  # Whether to record the test file output
             run_tests_values=run_tests_values       # Whether to run the test file
         )
-
+    
         # Validate the script output:
         if record_output:
             # If recording the script output, check that the expected output is in the script's stdout.
+            # Example: expected_script_stdout = "Hello, World!" -> script_output["stdout"] contains "Hello, World!"
             assert expected_script_stdout in script_output["stdout"]
         else:
             # If not recording the script output, assert that the script output should be empty.
+            # Example: record_output = False -> script_output == {"stdout": "", "stderr": ""}
             assert script_output == {"stdout": "", "stderr": ""}
         
         # Validate the test output
         if run_tests_values:
             if record_test_output and test_file_path == str(temp_test_file):
                 # If recording the test output and the test file path is valid, check that the expected output is in the test's stdout
-                assert expected_test_stdout in test_outputs[test_file_path]["stdout"]
+                # Example: expected_test_stdout = "Test Passed" -> test_outputs["stdout"] contains "Test Passed"
+                assert expected_test_stdout in test_outputs["stdout"]
             else:
                 # Ensure the test file path exists in the test_outputs dictionary
                 # and the output should be empty or match the expected output for invalid paths.
+                # Example: test_file_path = "invalid_test_file_path.py" -> test_outputs.get(test_file_path, {"stdout": "", "stderr": ""}) == {"stdout": "", "stderr": ""}
                 assert test_outputs.get(test_file_path, {"stdout": "", "stderr": ""}) == {"stdout": "", "stderr": ""}
         else:
             # If not running tests, the test outputs should be empty.
-            assert test_outputs == {}
+            # Example: run_tests_values = False -> test_outputs == {"stdout": "", "stderr": ""}
+            assert test_outputs == {"stdout": "", "stderr": ""}
 
 # Run the tests
 if __name__ == "__main__":
