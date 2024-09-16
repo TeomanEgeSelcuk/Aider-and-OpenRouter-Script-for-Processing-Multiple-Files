@@ -1,6 +1,5 @@
 import pytest
 import tempfile
-import os
 from pathlib import Path
 from typing import List
 from Aider_Project.utils import list_files

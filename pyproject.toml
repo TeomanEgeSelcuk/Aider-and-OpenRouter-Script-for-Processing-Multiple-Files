@@ -6,7 +6,7 @@ authors = ["Teoman Selcuk <teomanege.selcuk@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = ">=3.12,<3.13" 
-aider-chat = "^0.48.1"
+aider-chat = "^0.56.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.1"
