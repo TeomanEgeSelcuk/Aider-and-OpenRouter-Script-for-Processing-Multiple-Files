@@ -28,11 +28,11 @@ import pytest
 from Aider_Project.main import execute, aider_runner  # Import the execute function from main.py
 from Aider_Project.execute_helper import is_nested_empty_list # Import helper functions
 import random
-from typing import Any, List, Union, Dict
+from typing import Any, List, Union, Dict, Generator
 from pathlib import Path
 import ast
-# from unittest.mock import MagicMock
 import tempfile
+import shutil  # Import shutil for directory removal
 import os
 import textwrap
 import time 
@@ -710,7 +710,7 @@ def test_assert_outputs(actual_outputs, expected_outputs, is_test, should_fail):
         # Example: actual_outputs = ["output1"], expected_outputs = ["output1"], is_test = True or False -> assert_outputs(...) = True
 
 @pytest.fixture
-def mock_environment(tmp_path) -> Dict[str, Any]:
+def mock_environment(tmp_path) -> Generator[Dict[str, Any], None, None]:
     """
     Fixture for creating a temporary directory for file operations and providing a model.
 
@@ -720,10 +720,16 @@ def mock_environment(tmp_path) -> Dict[str, Any]:
     temp_dir = tmp_path / "mock_dir"
     temp_dir.mkdir()
     
-    return {
+    # Yield control to the test function, providing the model and temp directory
+    yield {
         "model": Model("openrouter/deepseek/deepseek-coder"),  # Use the predefined model identifier
         "temp_dir": temp_dir  # Temporary directory for creating files
     }
+
+    # Teardown: Cleanup the parent of the parent of temp_dir
+    grandparent_dir = temp_dir.parent.parent  # Get the parent of the parent of temp_dir
+    if grandparent_dir.exists():
+        shutil.rmtree(grandparent_dir)  # Remove the parent of the parent directory
 
 @pytest.mark.parametrize(
     "directory, files_by_directory, instructions, expected_exception, expected_functions_classes",
@@ -922,10 +928,22 @@ def temp_directory(tmp_path):
     # Makes a simple single assertion to test the subtraction function
     """))
 
-    return {
-        "directory_paths": [str(dir1), str(dir2)]
+    # Yield control to the test function, providing paths to directories
+    directory_paths = [str(dir1), str(dir2)]
+    yield {
+        "directory_paths": directory_paths
     }
 
+    # # Teardown: Cleanup the directories after the test is complete
+    # for dir_path in directory_paths:
+    #     if os.path.exists(dir_path):
+    #         shutil.rmtree(dir_path)
+
+    # Teardown: Cleanup the parent of the parent of tmp_path
+    parent_of_parent_dir = tmp_path.parent  # Get the parent of tmp_path
+    if parent_of_parent_dir.exists():
+        shutil.rmtree(parent_of_parent_dir)  # Remove the parent of the parent directory
+            
 @pytest.fixture
 def model():
     """
@@ -934,8 +952,6 @@ def model():
     Returns:
         Model: An instance of the Model class.
     """
-    # return Model("openrouter/deepseek/deepseek-coder")
-    # return Model("openrouter/mistralai/mistral-7b-instruct-v0.2")
     return Model("openrouter/openai/gpt-4o-mini")
 
 @pytest.mark.parametrize(
