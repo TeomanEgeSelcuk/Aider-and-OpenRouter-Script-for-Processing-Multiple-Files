@@ -726,10 +726,9 @@ def mock_environment(tmp_path) -> Generator[Dict[str, Any], None, None]:
         "temp_dir": temp_dir  # Temporary directory for creating files
     }
 
-    # Teardown: Cleanup the parent of the parent of temp_dir
-    grandparent_dir = temp_dir.parent.parent  # Get the parent of the parent of temp_dir
-    if grandparent_dir.exists():
-        shutil.rmtree(grandparent_dir)  # Remove the parent of the parent directory
+    # Teardown: Cleanup of the temp_dir
+    if temp_dir.exists():
+        shutil.rmtree(temp_dir)  # Remove the parent of the parent directory
 
 @pytest.mark.parametrize(
     "directory, files_by_directory, instructions, expected_exception, expected_functions_classes",
@@ -934,15 +933,12 @@ def temp_directory(tmp_path):
         "directory_paths": directory_paths
     }
 
-    # # Teardown: Cleanup the directories after the test is complete
-    # for dir_path in directory_paths:
-    #     if os.path.exists(dir_path):
-    #         shutil.rmtree(dir_path)
+    # Teardown: Cleanup the directories after the test is complete
+    for dir_path in directory_paths:
+        if os.path.exists(dir_path):
+            shutil.rmtree(dir_path)
 
-    # Teardown: Cleanup the parent of the parent of tmp_path
-    parent_of_parent_dir = tmp_path.parent  # Get the parent of tmp_path
-    if parent_of_parent_dir.exists():
-        shutil.rmtree(parent_of_parent_dir)  # Remove the parent of the parent directory
+
             
 @pytest.fixture
 def model():

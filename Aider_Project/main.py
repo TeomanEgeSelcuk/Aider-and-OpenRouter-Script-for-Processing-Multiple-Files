@@ -206,8 +206,7 @@ def execute(directory_paths: List[str],
         test_outputs: Dict[str, Any] = {}
 
         # Call organize_flags to get the organized flags based on the input structure
-        organized_flags = organize_flags(directory_paths=directory_paths, 
-                                        files_by_directory=files_by_directory, 
+        organized_flags = organize_flags(files_by_directory=files_by_directory, 
                                         record_output_flag=record_output_flag, 
                                         run_tests_flag=run_tests_flag, 
                                         record_test_output_values=record_test_output_values, 

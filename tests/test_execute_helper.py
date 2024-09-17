@@ -226,10 +226,10 @@ def test_generate_and_count_lists(files_by_directory_values, test_file_names_val
             else:
                 assert res_list == expected_list
                 
-@pytest.mark.parametrize("directory_paths, files_by_directory, test_file_names, record_output_flag, run_tests_flag, record_test_output_values, expected", [
+
+@pytest.mark.parametrize("files_by_directory, test_file_names, record_output_flag, run_tests_flag, record_test_output_values, expected", [
     # Test Case 1: Regular and test files distributed across two directories
     (
-        [r'path\to\codetest', r'path\to\codetest-2'],
         [["file1.py", "file2.py"], ["file3.py"]],
         [["test_file1.py"], ["test_file3.py"]],
         [True, True, False],
@@ -243,7 +243,6 @@ def test_generate_and_count_lists(files_by_directory_values, test_file_names_val
     ),
     # Test Case 2: Regular files in the first directory and test files in the second
     (
-        [r'path\to\codetest', r'path\to\codetest-2'],
         [["file1.py", "file3.py"], ["test_file1.py", "test_file3.py"]],
         [[], ["test_file1.py", "test_file3.py"]],
         [True, True, False, False],
@@ -257,7 +256,6 @@ def test_generate_and_count_lists(files_by_directory_values, test_file_names_val
     ),
     # Test Case 3: No test files
     (
-        [r'path\to\codetest'],
         [["file1.py", "file2.py"]],
         [[]],
         [True, False],
@@ -271,7 +269,6 @@ def test_generate_and_count_lists(files_by_directory_values, test_file_names_val
     ),
     # Test Case 4: Mismatched lengths for record_output_flag
     (
-        [r'path\to\codetest', r'path\to\codetest-2'],
         [["file1.py", "file2.py"], ["file3.py"]],
         [["test_file1.py"], ["test_file3.py"]],
         [True, True],  # Incorrect length
@@ -281,7 +278,6 @@ def test_generate_and_count_lists(files_by_directory_values, test_file_names_val
     ),
     # Test Case 5: Mismatched lengths for run_tests_flag and record_test_output_values
     (
-        [r'path\to\codetest', r'path\to\codetest-2'],
         [["file1.py", "file2.py"], ["file3.py"]],
         [["test_file1.py"], ["test_file3.py"]],
         [True, True, False],
@@ -292,7 +288,6 @@ def test_generate_and_count_lists(files_by_directory_values, test_file_names_val
     # Test Case 6: files_by_directory is None, record_output_flag is not None
     (
         None,
-        None,
         [["test_file1.py"], ["test_file3.py"]],
         [True, False],  # Should raise an error
         [True, False],
@@ -301,7 +296,6 @@ def test_generate_and_count_lists(files_by_directory_values, test_file_names_val
     ),
     # Test Case 7: test_file_names is None, run_tests_flag and record_test_output_values are not None
     (
-        [r'path\to\codetest'],
         [["file1.py"]],
         None,
         [True],
@@ -316,12 +310,10 @@ def test_generate_and_count_lists(files_by_directory_values, test_file_names_val
         None,
         None,
         None,
-        None,
         "error"
     ),
     # Test Case 9: files_by_directory is not None, but record_output_flag is None
     (
-        [r'path\to\codetest'],
         [["file1.py"]],
         [["test_file1.py"]],
         None,  # Should raise an error
@@ -331,7 +323,6 @@ def test_generate_and_count_lists(files_by_directory_values, test_file_names_val
     ),
     # Test Case 10: test_file_names is not None, but run_tests_flag is None
     (
-        [r'path\to\codetest'],
         [["file1.py"]],
         [["test_file1.py"]],
         [True],
@@ -341,7 +332,6 @@ def test_generate_and_count_lists(files_by_directory_values, test_file_names_val
     ),
     # Test Case 11: test_file_names is not None, but record_test_output_values is None
     (
-        [r'path\to\codetest'],
         [["file1.py"]],
         [["test_file1.py"]],
         [True],
@@ -351,7 +341,6 @@ def test_generate_and_count_lists(files_by_directory_values, test_file_names_val
     ),
     # Test Case 12: Only one file and one test file
     (
-        [r'path\to\codetest'],
         [["file1.py"]],
         [["test_file1.py"]],
         [True],
@@ -364,7 +353,7 @@ def test_generate_and_count_lists(files_by_directory_values, test_file_names_val
         }
     ),
 ])
-def test_organize_flags(directory_paths, files_by_directory, test_file_names, record_output_flag, run_tests_flag, record_test_output_values, expected):
+def test_organize_flags(files_by_directory, test_file_names, record_output_flag, run_tests_flag, record_test_output_values, expected):
     """
     Test function for `organize_flags`.
     
@@ -377,11 +366,12 @@ def test_organize_flags(directory_paths, files_by_directory, test_file_names, re
     """
     if expected == "error":
         with pytest.raises(ValueError):
-            organize_flags(directory_paths, files_by_directory, record_output_flag, run_tests_flag, record_test_output_values, test_file_names)
+            organize_flags(files_by_directory, record_output_flag, run_tests_flag, record_test_output_values, test_file_names)
     else:
-        result = organize_flags(directory_paths, files_by_directory, record_output_flag, run_tests_flag, record_test_output_values, test_file_names)
+        result = organize_flags(files_by_directory, record_output_flag, run_tests_flag, record_test_output_values, test_file_names)
         # Assert the results match the expected values
         assert result == expected
+
 
 
 @pytest.mark.parametrize("flag_list, index, expected", [

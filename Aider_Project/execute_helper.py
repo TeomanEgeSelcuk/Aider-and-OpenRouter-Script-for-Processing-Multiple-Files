@@ -320,8 +320,7 @@ def generate_and_count_lists(
     return record_output_list, record_test_output_list, run_tests_list
 
 
-def organize_flags(directory_paths: Optional[List[str]] = None, 
-                   files_by_directory: Optional[List[List[str]]] = None, 
+def organize_flags(files_by_directory: Optional[List[List[str]]] = None, 
                    record_output_flag: Optional[List[bool]] = None, 
                    run_tests_flag: Optional[List[bool]] = None, 
                    record_test_output_values: Optional[List[bool]] = None,
@@ -347,7 +346,6 @@ def organize_flags(directory_paths: Optional[List[str]] = None,
     - Ensures that at least one variable from both groups is not None.
     
     Args:
-        directory_paths (Optional[List[str]]): List of directory paths.
         files_by_directory (Optional[List[List[str]]]): Nested list where each sublist contains files for a directory.
         record_output_flag (Optional[List[bool]]): Flat list of record output flags for each file.
         run_tests_flag (Optional[List[bool]]): Flat list of run tests flags for each file.
@@ -365,10 +363,6 @@ def organize_flags(directory_paths: Optional[List[str]] = None,
         Test Case 1:
         ```
         # Define the input arguments for the function
-        directory_paths_1 = [
-            r'path\to\codetest', 
-            r'path\to\codetest-2'
-        ]
         files_by_directory_1 = [
             ["file1.py", "file2.py"], 
             ["file3.py"]
@@ -383,7 +377,6 @@ def organize_flags(directory_paths: Optional[List[str]] = None,
     
         # Call the function to organize the flags for test case 1
         organized_flags_1 = organize_flags(
-            directory_paths_1, 
             files_by_directory_1, 
             record_output_flag_1, 
             run_tests_flag_1, 
@@ -415,10 +408,6 @@ def organize_flags(directory_paths: Optional[List[str]] = None,
         Test Case 2:
         ```
         # Define the input arguments for the function
-        directory_paths_1 = [
-            r'path\to\codetest', 
-            r'path\to\codetest-2'
-        ]
         files_by_directory_2 = [
             ["file1.py", "file3.py"], 
             ["test_file1.py", "test_file3.py"]
@@ -433,7 +422,6 @@ def organize_flags(directory_paths: Optional[List[str]] = None,
     
         # Call the function to organize the flags for test case 2
         organized_flags_2 = organize_flags(
-            directory_paths_2, 
             files_by_directory_2, 
             record_output_flag_2, 
             run_tests_flag_2, 
