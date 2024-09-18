@@ -1,5 +1,4 @@
 import pytest
-from pathlib import Path
 from Aider_Project.runner import run_script_and_record_output
 
 """

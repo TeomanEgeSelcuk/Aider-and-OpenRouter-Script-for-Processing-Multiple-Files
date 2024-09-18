@@ -24,25 +24,25 @@ Tests:
 '''
 
 import pytest
-import itertools
+
 from Aider_Project.main import execute, aider_runner  # Import the execute function from main.py
-from Aider_Project.execute_helper import is_nested_empty_list, validate_lengths, generate_and_count_lists # Import helper functions
+from Aider_Project.execute_helper import is_nested_empty_list # Import helper functions
 import random
-from typing import Any, List, Union, Tuple, Dict
-from types import FunctionType, CodeType
+from typing import Any, List, Union, Dict, Generator
 from pathlib import Path
 import ast
-# from unittest.mock import MagicMock
 import tempfile
+import shutil  # Import shutil for directory removal
 import os
+import sys
+import io
 import textwrap
 import time 
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 # For testing Aider package functionality
-from aider.coders import Coder
 from aider.models import Model
-from aider.io import InputOutput 
+from aider.coders import Coder
 
 def generate_nested_lists() -> list:
     """
@@ -713,7 +713,7 @@ def test_assert_outputs(actual_outputs, expected_outputs, is_test, should_fail):
         # Example: actual_outputs = ["output1"], expected_outputs = ["output1"], is_test = True or False -> assert_outputs(...) = True
 
 @pytest.fixture
-def mock_environment(tmp_path) -> Dict[str, Any]:
+def mock_environment(tmp_path) -> Generator[Dict[str, Any], None, None]:
     """
     Fixture for creating a temporary directory for file operations and providing a model.
 
@@ -723,10 +723,15 @@ def mock_environment(tmp_path) -> Dict[str, Any]:
     temp_dir = tmp_path / "mock_dir"
     temp_dir.mkdir()
     
-    return {
+    # Yield control to the test function, providing the model and temp directory
+    yield {
         "model": Model("openrouter/deepseek/deepseek-coder"),  # Use the predefined model identifier
         "temp_dir": temp_dir  # Temporary directory for creating files
     }
+
+    # Teardown: Cleanup of the temp_dir
+    if temp_dir.exists():
+        shutil.rmtree(temp_dir)  # Remove the parent of the parent directory
 
 @pytest.mark.parametrize(
     "directory, files_by_directory, instructions, expected_exception, expected_functions_classes",
@@ -849,107 +854,6 @@ def test_aider_runner(
         # Add a delay of one second after the else statement to avoid API rate limit issues
         time.sleep(1)
 
-# # Fixtures for creating temporary directories and files
-# @pytest.fixture
-# def temp_directory(tmp_path):
-#     # Use pytest's built-in tmp_path fixture to create a temporary directory for tests
-#     dir1 = tmp_path / "dir1"  # Create a subdirectory named 'dir1' within the temporary directory
-#     dir2 = tmp_path / "dir2"  # Create another subdirectory named 'dir2'
-#     dir1.mkdir()  # Actually create 'dir1' on the filesystem
-#     dir2.mkdir()  # Actually create 'dir2' on the filesystem
-#     # Create a file named 'math_functions.py' in 'dir1' with a simple print statement
-#     (dir1 / "math_functions.py").write_text("print('Math Functions')")
-#     # Create a test file named 'test.py' in 'dir1' with a simple print statement
-#     (dir1 / "test.py").write_text("print('Test File')")
-#     # Create another script file in 'dir2' with a simple print statement
-#     (dir2 / "another_script.py").write_text("print('Another Script')")
-#     # Create another test file in 'dir2' with a simple print statement
-#     (dir2 / "yet_another_test.py").write_text("print('Yet Another Test')")
-#     return [str(dir1), str(dir2)]  # Return the paths of the created directories as strings
-
-# # Define possible values for each parameter
-# directory_paths_values = [["invalid_dir"], ["dir1", "dir2"]]  # Possible values for directory paths
-# files_by_directory_values = [[['math_functions.py', 'test.py'], ['another_script.py', 'yet_another_test.py']], [['invalid_file.py'], ['invalid_script.py']], generate_nested_lists()]  # Possible values for files by directory
-# test_file_names_values = [[['test.py'], ['yet_another_test.py']], generate_nested_lists()]  # Possible values for test file names
-# record_output_values = [True, False, "Mix"]  # Possible values for record_output flag
-# record_test_output_values = [True, False, "Mix"]  # Possible values for record_test_output flag
-# run_tests_values = [True, False, "Mix"]  # Possible values for run_tests flag
-# verbose_values = [True, False]  # Possible values for verbose flag
-# model_provided_values = [True, False, "invalid_model_name"]  # Possible values for model provided flag
-
-# # Generate all combinations of these values
-# test_data = list(itertools.product(
-#     directory_paths_values,  # All combinations of directory paths values
-#     files_by_directory_values,  # All combinations of files by directory values
-#     test_file_names_values,  # All combinations of test file names values
-#     record_output_values,  # All combinations of record_output flag values
-#     record_test_output_values,  # All combinations of record_test_output flag values
-#     run_tests_values,  # All combinations of run_tests flag values
-#     verbose_values,  # All combinations of verbose flag values
-#     model_provided_values,  # All combinations of model provided values
-# ))
-
-# def execute_with_exception_handling(directory_paths, files_by_directory, test_file_names, record_output, record_test_output, run_tests, verbose, model, expected_exception):
-#     """Helper function to execute with exception handling."""
-#     with pytest.raises(expected_exception):
-#         execute(
-#             directory_paths=directory_paths,
-#             files_by_directory=files_by_directory,
-#             record_output=record_output,
-#             record_test_output=record_test_output,
-#             run_tests=run_tests,
-#             test_file_names=test_file_names,
-#             verbose=verbose,
-#             model=model,
-#         )
-
-# @pytest.mark.parametrize("directory_paths, files_by_directory, test_file_names, record_output, record_test_output, run_tests, verbose, model_provided", test_data)
-# def test_execute_combined(temp_directory, model, directory_paths, files_by_directory, test_file_names, record_output, record_test_output, run_tests, verbose, model_provided):
-#     # Setup test directories and files
-#     if "dir1" in directory_paths:  # Check if "dir1" is in the directory paths
-#         directory_paths = temp_directory  # Use temporary directory if "dir1" is present
-    
-#     if model_provided == "invalid_model_name":  # Check if an invalid model name is provided
-#         model = Model("invalid_model_name")  # Set model to an invalid model name
-#     elif model_provided:  # Check if a model is provided
-#         model = model  # Use the provided model
-#     else:
-#         model = None  # Set model to None if no model is provided
-    
-#     # Call the generate_and_count_lists function which overwrites the record_output, record_test_output, and run_tests lists
-#     record_output, record_test_output, run_tests = generate_and_count_lists(
-#         files_by_directory, test_file_names, record_output, record_test_output, run_tests
-#     )
-
-#     # Execute the function with the provided parameters
-#     if directory_paths == ["invalid_dir"]:  # Check if the directory paths are invalid
-#         execute_with_exception_handling(directory_paths, files_by_directory, test_file_names, record_output, record_test_output, run_tests, verbose, model, instructions, Exception)
-#     elif files_by_directory == [['invalid_file.py'], ['invalid_script.py']]:  # Check if the files are invalid
-#         execute_with_exception_handling(directory_paths, files_by_directory, test_file_names, record_output, record_test_output, run_tests, verbose, model, instructions, Exception)
-#     elif validate_lengths(files_by_directory, run_tests_values, record_test_output) and validate_lengths(files_by_directory, record_output_values):  # Check if the lengths of the lists do not match
-#         execute_with_exception_handling(directory_paths, files_by_directory, test_file_names, record_output, record_test_output, run_tests, verbose, model, instructions, ValueError)
-#     elif is_nested_empty_list(files_by_directory) and is_nested_empty_list(test_file_names):  # Check if both files and test file lists are empty
-#         execute_with_exception_handling(directory_paths, files_by_directory, test_file_names, record_output, record_test_output, run_tests, verbose, model, instructions, Exception)
-#     elif not model_provided:  # Check if the model is not provided
-#         execute_with_exception_handling(directory_paths, files_by_directory, test_file_names, record_output, record_test_output, run_tests, verbose, model, instructions, ValueError)
-#     elif model_provided == "invalid_model_name":  # Check if the model provided is invalid
-#         execute_with_exception_handling(directory_paths, files_by_directory, test_file_names, record_output, record_test_output, run_tests, verbose, model, instructions, Exception)
-#     elif files_by_directory == [['math_functions.py', ['test.py']], ['another_script.py']]:  # Check if the nested list structure is invalid
-#         execute_with_exception_handling(directory_paths, files_by_directory, test_file_names, record_output, record_test_output, run_tests, verbose, model, instructions, Exception)
-#     else:  # For valid inputs
-#         script_outputs, test_outputs = execute(
-#             directory_paths=directory_paths,
-#             files_by_directory=files_by_directory,
-#             record_output=record_output,
-#             record_test_output=record_test_output,
-#             run_tests=run_tests,
-#             test_file_names=test_file_names,
-#             verbose=verbose,
-#             model=model,
-#         )
-#         assert isinstance(script_outputs, dict)  # Assert that script outputs are a dictionary
-#         assert isinstance(test_outputs, dict)  # Assert that test outputs are a dictionary
-
 @pytest.fixture(scope="session", autouse=True)
 def disable_frozen_modules():
     os.environ["PYTHONPATH"] = "-Xfrozen_modules=off"
@@ -1025,10 +929,19 @@ def temp_directory(tmp_path):
     # Makes a simple single assertion to test the subtraction function
     """))
 
-    return {
-        "directory_paths": [str(dir1), str(dir2)]
+    # Yield control to the test function, providing paths to directories
+    directory_paths = [str(dir1), str(dir2)]
+    yield {
+        "directory_paths": directory_paths
     }
 
+    # Teardown: Cleanup the directories after the test is complete
+    for dir_path in directory_paths:
+        if os.path.exists(dir_path):
+            shutil.rmtree(dir_path)
+
+
+            
 @pytest.fixture
 def model():
     """
@@ -1037,8 +950,6 @@ def model():
     Returns:
         Model: An instance of the Model class.
     """
-    # return Model("openrouter/deepseek/deepseek-coder")
-    # return Model("openrouter/mistralai/mistral-7b-instruct-v0.2")
     return Model("openrouter/openai/gpt-4o-mini")
 
 @pytest.mark.parametrize(

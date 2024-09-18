@@ -1,12 +1,10 @@
 from pathlib import Path
-from typing import  List, Optional, Dict, Any, Tuple, Union
+from typing import  List, Optional, Dict, Any, Tuple
 from aider.coders import Coder
-# from aider.models import Model
 from aider.io import InputOutput
 import os
 
 # Modules within this project 
-# from Aider_Project.utils import get_openrouter_api_key, list_files
 from Aider_Project.runner import run_script_and_record_output 
 from Aider_Project.execute_helper import is_nested_empty_list, validate_lengths, check_nested_lists_and_flat_list, organize_flags, get_flag_value
 
@@ -54,14 +52,14 @@ def aider_runner(directory: str, files_by_directory: List[str], model: Any, inst
     # Create a Coder object and set the working directory
     coder = Coder.create(main_model=model, fnames=fnames, io=io)
     coder.root = Path(directory).resolve()  # Set the working directory
-    coder.find_common_root()  # Ensure paths are correctly set
     
     # Disable Git functionality
     coder.repo = None  # Disable the Git repository
     coder.dirty_commits = False  # Disable dirty commits
     coder.check_for_dirty_commit = lambda path: None  # Disable checking for dirty commits
     coder.allowed_to_edit = lambda path: True  # Always allow editing without Git checks
-    coder.auto_commit = lambda edited: None  # Disable auto commits
+    coder.auto_commit = lambda edited, context=None: None  # Accepts context but does nothing
+
 
     # Run the prompts on the files
     for instruction in instructions:
@@ -206,8 +204,7 @@ def execute(directory_paths: List[str],
         test_outputs: Dict[str, Any] = {}
 
         # Call organize_flags to get the organized flags based on the input structure
-        organized_flags = organize_flags(directory_paths=directory_paths, 
-                                        files_by_directory=files_by_directory, 
+        organized_flags = organize_flags(files_by_directory=files_by_directory, 
                                         record_output_flag=record_output_flag, 
                                         run_tests_flag=run_tests_flag, 
                                         record_test_output_values=record_test_output_values, 
@@ -280,155 +277,3 @@ def execute(directory_paths: List[str],
             print(f"Error: {e}")
         raise  # Re-raise the exception after logging it if verbose
     
-# Example usage
-# if __name__ == "__main__":
-
-    # # Replace with the absolute paths of the directories you want to process
-    # # Pass the file names as a list of lists corresponding to each directory
-    # directory_paths = [r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest', r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest-2']
-    # files_by_directory = [['math_functions.py', 'test.py'], ['another_script.py', 'yet_another_test.py']]
-    # record_output_flag = [False, True, True, False]
-    # run_tests_flag = [True, True, True, True]
-    # record_test_output_values = [True, False, True, False]
-    # test_file_names = [['test.py', 'another_test.py'], ['other_test.py', 'more_tests.py']]
-    # verbose_flag = True
-    # model = Model("openrouter/deepseek/deepseek-coder")
-    # instructions = [
-    #     "in test.py: make me a code about Fibonacci",
-    #     "in math_functions.py: make me a code about some other function about math use test.py to import the function there",
-    #     # Add more instructions as needed
-    # ]
-
-    # script_outputs, test_outputs = execute(directory_paths, files_by_directory, 
-    #                                        record_output=record_output_flag, 
-    #                                        run_tests=run_tests_flag, 
-    #                                        record_test_output_values=record_test_output_values,
-    #                                        test_file_names=test_file_names,
-    #                                        verbose=verbose_flag,
-    #                                        model=model,
-    #                                        instructions=instructions)
-
-    # import time 
-
-    # def clear_files(file_paths: List[str]) -> None:
-    #     """
-    #     Clears the contents of the specified files.
-        
-    #     Args:
-    #         file_paths (List[str]): A list of file paths to clear.
-    #     """
-    #     for file_path in file_paths:
-    #         with open(file_path, 'w') as file:
-    #             file.write("")
-
-    # # Assuming `Model` and `execute` are defined elsewhere in your codebase
-    # model = Model("openrouter/deepseek/deepseek-coder")
-
-    # # Example 1: Basic usage without tests
-    # print("Example 1 Output:")
-    # clear_files([r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest\file1.py', 
-    #             r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest\file2.py'])
-    # print(execute(directory_paths=[r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest', 
-    #                             r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest-2'],
-    #             files_by_directory=[["file1.py", "file2.py"], ["file3.py"]],
-    #             model=model,
-    #             record_output_flag=[True, True, False],
-    #             run_tests_flag=[False, False],
-    #             test_file_names=[["test_file1.py"], ["test_file3.py"]],
-    #             record_test_output_values=[False, False],
-    #             verbose=True,
-    #             instructions=[
-    #                 [
-    #                     "in file1.py: add a function to print 'Hello World'. Add a way to run this module with the func.",
-    #                     "in file2.py: add a function to print 'Test File 2. Add a way to run this module with the func.'"
-    #                 ]
-    #             ]))
-
-    # print('sleeping')
-    # # Wait for 1 second
-    # time.sleep(1)
-    # # os._exit(0)
-
-    # # Example 2: Running scripts and tests with output recording
-    # print("Example 2 Output:")
-    # clear_files([r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest\file1.py', 
-    #             r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest\file3.py',
-    #             r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest-2\test_file1.py',
-    #             r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest-2\test_file3.py'])
-    # print(execute(directory_paths=[r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest', 
-    #                             r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest-2'],
-    #             files_by_directory=[["file1.py", "file3.py"], ["test_file1.py", "test_file3.py"]],
-    #             model=model,
-    #             record_output_flag=[True, True, False, False],
-    #             run_tests_flag=[True, True],
-    #             test_file_names=[[], ["test_file1.py", "test_file3.py"]],
-    #             record_test_output_values=[True, True],
-    #             verbose=True,
-    #             instructions=[
-    #                 [
-    #                 "in file1.py: add a function called 'test' to print 'Running tests'. Add a way to run this module with the func.",
-    #                 "in file3.py: add a function called 'test_two' to print 'Running tests on file 3'. Add a way to run this module with the func"
-    #                 ],
-    #                 [
-    #                 "in test_file1.py: add a pytest function to test ../codetest/file1.py which is called 'test' and prints 'Running tests",
-    #                 "in test_file3.py: add a pytest function to test ../codetest/file3.py which is called 'test_two' and prints 'Running tests on file 3'"
-    #                 ]
-    #             ]))
-
-    # # Wait for 1 second
-    # time.sleep(1)
-
-    # # Example 3: Running scripts without recording their output
-    # print("Example 3 Output:")
-    # clear_files([r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest\file1.py'])
-    # print(execute(directory_paths=[r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest'],
-    #             files_by_directory=[["file1.py"]],
-    #             model=model,
-    #             record_output_flag=[False],
-    #             run_tests_flag=[False],
-    #             test_file_names=[[]],
-    #             record_test_output_values=[False],
-    #             verbose=True,
-    #             instructions=[["in file1.py: add a function to print 'No output recording'"]]))
-
-    # # Wait for 1 second
-    # time.sleep(1)
-
-    # # Example 4: Complex case with mixed settings
-    # print("Example 4 Output:")
-    # clear_files([r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest\file1.py', 
-    #             r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest\file2.py', 
-    #             r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest-extra\file4.py',
-    #             r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest-2\test_file4.py'])
-    # print(execute(directory_paths=[r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest', 
-    #                             r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest-extra',
-    #                             r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest-2'],
-    #             files_by_directory=[["file1.py", "file2.py"], ["file4.py"], ["test_file4.py"]],
-    #             model=model,
-    #             record_output_flag=[True, False, True, False],
-    #             run_tests_flag=[False, True],
-    #             test_file_names=[[], [], ["test_file3.py", "test_file4.py"]],
-    #             record_test_output_values=[False, True],
-    #             verbose=True,
-    #             instructions=[
-    #                 ["in file2.py: add a function named complex_two to print 'Complex case example 2'"],
-    #                 ["in file4.py: add a function named complex_four to print 'Complex case example 4'. Add a way to run this module with the func"],
-    #                 ["in test_file4.py: add a pytest function to test ../codetest-extra/file4.py' which prints 'Complex case example 4'"]
-    #             ]))
-
-    # # Wait for 1 second
-    # time.sleep(1)
-
-    # # Example 5: Running scripts with optional test parameters not given
-    # print("Example 5 Output:")
-    # clear_files([r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest\file1.py', 
-    #             r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest\file2.py'])
-    # print(execute(directory_paths=[r'C:\Users\maste\OneDrive\Desktop\Coding\aider\codetest'],
-    #             files_by_directory=[["file1.py", "file2.py"]],
-    #             model=model,
-    #             record_output_flag=[False, True],
-    #             verbose=True,
-    #             instructions=[
-    #                 "in file1.py: add a function to print 'No tests'. Add a way to run this module with the func",
-    #                 "in file2.py: add a function to print 'No tests'. Add a way to run this module with the func"
-    #             ]))
