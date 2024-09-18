@@ -34,12 +34,15 @@ import ast
 import tempfile
 import shutil  # Import shutil for directory removal
 import os
+import sys
+import io
 import textwrap
 import time 
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 # For testing Aider package functionality
 from aider.models import Model
+from aider.coders import Coder
 
 def generate_nested_lists() -> list:
     """
@@ -850,7 +853,6 @@ def test_aider_runner(
         
         # Add a delay of one second after the else statement to avoid API rate limit issues
         time.sleep(1)
-
 
 @pytest.fixture(scope="session", autouse=True)
 def disable_frozen_modules():
